@@ -1,0 +1,10 @@
+node_modules
+.venv
+dist
+.vitepress/dist
+.git
+*.md.b64
+_tmp
+*.log
+.env
+screenshots

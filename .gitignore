@@ -1,0 +1,33 @@
+# Node / build
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+dist/
+build/
+__pycache__/
+*.pyc
+
+# Python venv
+.venv/
+venv/
+
+# Secrets / temp
+.env
+.env.local
+_tmp/
+*.b64
+*.log
+*.tmp
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Screenshots (local only)
+screenshots/
+
+# DSH harness leftovers
+serve-proxy.cjs

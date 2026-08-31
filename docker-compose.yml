@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: aipower-backend:latest
+    container_name: aipower-backend
+    restart: unless-stopped
+    environment:
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-https://api.openai.com/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      AIPOWER_USERS: ${AIPOWER_USERS:-demo:demo123:Demo User,admin:admin123:Admin}
+    networks:
+      - aipower-net
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aipower-web:latest
+    container_name: aipower-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - backend
+    networks:
+      - aipower-net
+
+networks:
+  aipower-net:
+    driver: bridge
