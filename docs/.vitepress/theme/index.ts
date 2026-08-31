@@ -8,7 +8,6 @@ import HeroBanner from './components/HeroBanner.vue'
 import LoginPage from './components/LoginPage.vue'
 import Workspace from './components/Workspace.vue'
 import AgentDock from './components/AgentDock.vue'
-import PublicLanding from './components/PublicLanding.vue'
 import CapabilitiesPage from './components/CapabilitiesPage.vue'
 import AboutPage from './components/AboutPage.vue'
 import GroupCard from './components/GroupCard.vue'
@@ -31,7 +30,6 @@ export default {
     app.component('AgentDock', AgentDock)
     app.component('Workspace', Workspace)
     app.component('LoginPage', LoginPage)
-    app.component('PublicLanding', PublicLanding)
     app.component('CapabilitiesPage', CapabilitiesPage)
     app.component('AboutPage', AboutPage)
     app.component('GroupCard', GroupCard)
