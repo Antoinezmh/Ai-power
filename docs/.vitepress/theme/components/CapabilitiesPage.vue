@@ -50,7 +50,7 @@ const capabilities = [
         >
           <div class="head">
             <div class="icon">{{ c.icon }}</div>
-            <div class="num">0{{ c.num }}</div>
+            <div class="num">{{ c.num }}</div>
           </div>
           <div class="name">{{ c.name }}</div>
           <div class="en">{{ c.en }}</div>

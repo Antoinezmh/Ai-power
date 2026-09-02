@@ -3,11 +3,13 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 
 const hero = useScrollReveal({ threshold: 0.05, rootMargin: '0px', initial: true })
-const caps = useScrollReveal()
-const pipe = useScrollReveal()
-const ai = useScrollReveal()
-const prin = useScrollReveal()
-const cta = useScrollReveal()
+// 页面上下滚动时重复触发，让每个区块进入视口都有自然的出现动画。
+const revealOptions = { once: false, threshold: 0.08 }
+const caps = useScrollReveal(revealOptions)
+const pipe = useScrollReveal(revealOptions)
+const ai = useScrollReveal(revealOptions)
+const prin = useScrollReveal(revealOptions)
+const cta = useScrollReveal(revealOptions)
 
 const metrics = [
   { v: '28', l: '个工具' },
@@ -96,7 +98,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
       :ref="(el) => caps.setRef(el)"
     >
       <div class="hp-bg" />
-      <div class="hp-inner">
+      <div class="hp-inner hp-inner--capabilities">
         <div class="hp-sechead">
           <div class="hp-eyebrow">CAPABILITIES</div>
           <h3 class="hp-display">四个能力模块</h3>
@@ -245,9 +247,10 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     </section>
 
     <footer class="hp-footer">
-      <div>© 2026 功率器件研发部 内部资料 仅限部门同事访问</div>
-      <div>v1.0.0 反馈 <a href="mailto:aipower@company.local">aipower@company.local</a></div>
+      <div>© 2026 功率器件研发部 · 内部资料 · 仅限部门同事访问</div>
+      <div>v1.0.0 · 反馈：<a href="mailto:aipower@company.local">aipower@company.local</a></div>
     </footer>
+
   </div>
 </template>
 
@@ -305,13 +308,24 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: min(2000px, calc(100vw - clamp(32px, 5vw, 112px)));
+  /* 大屏不要无限横向拉伸，控制内容密度和左右留白的平衡。 */
+  max-width: min(1440px, calc(100vw - clamp(48px, 8vw, 160px)));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: clamp(24px, 4vh, 56px);
   text-align: center;
+}
+
+/* 能力模块需要更宽的横向排布，避免卡片内容被压窄后变成长条。 */
+.hp-inner--capabilities {
+  max-width: min(1520px, calc(100vw - clamp(48px, 6vw, 120px)));
+}
+
+/* 超宽显示器上略微增加内容宽度，但不让卡片被拉得过松。 */
+@media (min-width: 1680px) {
+  .hp-inner { max-width: 1480px; }
 }
 
 /* Content reveal — IntersectionObserver triggers this */
@@ -330,6 +344,13 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   opacity: 1;
   transform: translateY(0);
   filter: blur(0);
+}
+
+/* 轻微的景深感，让下拉时内容从页面中自然浮现。 */
+.hp-section:not(.is-in-view) .hp-sechead,
+.hp-section:not(.is-in-view) .hp-split-text,
+.hp-section:not(.is-in-view) .hp-split-mock {
+  transform: translateY(28px) scale(0.985);
 }
 
 /* Stagger children — each waits an extra 90ms after the previous */
@@ -617,6 +638,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--aip-text-primary);
+  white-space: nowrap;
 }
 .hp-cap-en {
   font-family: var(--aip-font-mono);
@@ -890,6 +912,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   gap: 24px;
   max-width: 720px;
 }
+.hp-section--cta {
+  min-height: auto;
+  padding-top: clamp(56px, 7vh, 96px);
+  padding-bottom: clamp(48px, 6vh, 80px);
+}
+.hp-section--cta .hp-inner { gap: 0; }
 .hp-cta-sub {
   font-size: var(--aip-fs-md);
   color: var(--aip-text-secondary);
@@ -901,7 +929,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
    ========================================================= */
 .hp-footer {
   border-top: 1px solid var(--aip-border-subtle);
-  padding: 32px;
+  padding: 20px clamp(20px, 4vw, 48px);
   background: var(--aip-bg-base);
   display: flex;
   justify-content: space-between;
@@ -927,6 +955,10 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   .hp-split { grid-template-columns: 1fr; gap: 40px; }
   .hp-pipe-step { min-width: 110px; }
   .hp-metrics { gap: 40px; }
+}
+/* 窄桌面及平板：卡片改为单列，保证中文模块名和描述有足够空间。 */
+@media (max-width: 960px) {
+  .hp-cap-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .hp-section {
@@ -960,5 +992,22 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
    ========================================================= */
 @media (min-width: 1025px) {
   html { scroll-behavior: smooth; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-section,
+  .hp-inner > *,
+  .hp-section.is-in-view .hp-cap,
+  .hp-section.is-in-view .hp-pipe-step,
+  .hp-section.is-in-view .hp-prin,
+  .hp-section.is-in-view .hp-mock-body .msg,
+  .hp-section.is-in-view .hp-metrics .m,
+  .hp-section.is-in-view .hp-pipe-arrow {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
 }
 </style>

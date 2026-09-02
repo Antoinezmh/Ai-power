@@ -124,6 +124,14 @@ body { font-family: var(--aip-font-ui); overflow-x: hidden; -webkit-font-smoothi
 html { color-scheme: light; }
 
 .VPHome { background: var(--aip-bg-base); }
+/* 首页 CTA 作为最后一个内容区块，不再附带 VitePress 的更新时间和页脚留白。 */
+body:has(.hp) .VPLastUpdated,
+body:has(.hp) .VPFooter { display: none !important; }
+body:has(.hp) .VPDoc { padding-bottom: 0 !important; }
+body:has(.login-page) .VPNav { display: none !important; }
+body:has(.login-page) .VPLastUpdated,
+body:has(.login-page) .VPFooter { display: none !important; }
+body:has(.login-page) .VPDoc { padding-top: 0 !important; padding-bottom: 0 !important; }
 
 /* ── Navigation bar — clean white hairline ───────────── */
 .VPNavBar {
@@ -914,16 +922,17 @@ div[class*="language-"] {
 .aip-bento {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: var(--aip-s-4);
-  max-width: 1280px;
+  gap: clamp(16px, 1.5vw, 24px);
+  /* 能力卡片信息密度较高，在桌面端使用更宽的专用画布。 */
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 0 var(--aip-s-5);
+  padding: 0 clamp(16px, 3vw, 56px);
 }
 .aip-bento-tile {
   background: var(--aip-bg-elevated);
   border: 1px solid var(--aip-border-subtle);
   border-radius: var(--aip-radius-xl);
-  padding: var(--aip-s-8) var(--aip-s-7);
+  padding: clamp(40px, 4vw, 64px) clamp(28px, 3vw, 48px);
   display: flex;
   flex-direction: column;
   gap: var(--aip-s-3);

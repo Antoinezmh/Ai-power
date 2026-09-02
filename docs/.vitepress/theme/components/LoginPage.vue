@@ -775,6 +775,73 @@ const highlights = [
   }
 }
 
+/* ============================================================
+   Login shell — focused, minimal, Apple-like
+   登录页只承担身份入口，不展示首页式的运营内容。
+   ============================================================ */
+.login-page .bg-deco { display: none; }
+.login-page { background: #f5f5f7; }
+.login-page .login-shell {
+  grid-template-columns: 1fr;
+  min-height: 100svh;
+}
+.login-page .lp-right { display: none; }
+.login-page .lp-left { background: transparent; }
+.login-page .lp-left {
+  width: min(100%, 720px);
+  min-height: 100svh;
+  margin: 0 auto;
+  border-right: 0;
+  border-bottom: 0;
+  padding: clamp(24px, 5vw, 56px) clamp(20px, 6vw, 72px) 32px;
+}
+.login-page .login-card {
+  max-width: 460px;
+  margin: clamp(72px, 12vh, 128px) auto 0;
+  padding: clamp(32px, 5vw, 56px);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(29, 29, 31, 0.08);
+}
+.login-page .login-head h1 { font-size: 34px; letter-spacing: -0.04em; }
+.login-page .field input {
+  min-height: 52px;
+  background: #f5f5f7;
+  border-color: transparent;
+  border-radius: 12px;
+}
+.login-page .field input:focus,
+.login-page .field.focused input { border-color: var(--aip-text-primary); background: #fff; }
+.login-page .aip-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1px solid var(--aip-text-primary);
+  border-radius: 14px;
+  background: var(--aip-text-primary);
+  color: #fff;
+  font: 500 var(--aip-fs-base)/1 var(--aip-font-ui);
+  cursor: pointer;
+  transition: background var(--aip-dur-fast) var(--aip-ease-out), transform var(--aip-dur-fast) var(--aip-ease-out);
+}
+.login-page .aip-btn-primary:hover { background: #000; transform: translateY(-1px); }
+.login-page .aip-btn-primary:active { transform: translateY(0); }
+.login-page .submit { min-height: 52px; border-radius: 14px; font-size: var(--aip-fs-base); }
+.login-page .demo-hint { background: #f5f5f7; border: 0; border-radius: 14px; }
+.login-page .lp-foot { text-align: center; align-items: center; }
+.login-page .lp-foot { max-width: 520px; width: 100%; margin: auto auto 0; }
+
+@media (max-width: 640px) {
+  .login-page .lp-left { padding: 20px 20px 24px; }
+  .login-page .login-card {
+    margin-top: 64px;
+    padding: 28px 24px;
+    border-radius: 18px;
+  }
+}
+
 .err-enter-active, .err-leave-active { transition: all var(--aip-dur-base) var(--aip-ease-out); }
 .err-enter-from, .err-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>
