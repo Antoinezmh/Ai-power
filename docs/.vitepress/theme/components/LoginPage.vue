@@ -13,6 +13,21 @@ const error = ref('')
 const rememberMe = ref(true)
 const focused = ref<string | null>(null)
 
+/**
+ * 登录成功后跳转逻辑：
+ * - 如果 .env 里设置了 VITE_APP_URL，跳转到该 URL（用于内网服务器应用）
+ * - 否则跳转到 vitepress 内部的工作台（默认行为）
+ */
+const handlePostLogin = () => {
+  const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.trim()
+  if (appUrl) {
+    window.location.href = appUrl
+  } else {
+    const redirect = new URLSearchParams(location.search).get('redirect') || '/app/'
+    router.go(redirect)
+  }
+}
+
 const submit = async () => {
   if (loading.value) return
   error.value = ''
@@ -20,8 +35,7 @@ const submit = async () => {
   const r = await auth.login(username.value, password.value)
   loading.value = false
   if (r.ok) {
-    const redirect = new URLSearchParams(location.search).get('redirect') || '/app/'
-    router.go(redirect)
+    handlePostLogin()
   } else {
     error.value = r.error || '登录失败'
   }
@@ -29,7 +43,7 @@ const submit = async () => {
 
 onMounted(() => {
   auth.init()
-  if (auth.isAuthenticated.value) router.go('/app/')
+  if (auth.isAuthenticated.value) handlePostLogin()
   // Break out of VitePress default `.content` (752px) and `.container` (992px) caps
   // so the split-screen layout can use the full viewport width.
   document.querySelectorAll('.content, .container, .VPDoc, .vp-doc').forEach((el) => {

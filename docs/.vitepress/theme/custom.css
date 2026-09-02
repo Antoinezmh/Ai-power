@@ -17,6 +17,7 @@
   --aip-text-primary:   #1D1D1F;    /* hero / titles */
   --aip-text-secondary: #6E6E73;    /* body copy */
   --aip-text-tertiary:  #86868B;    /* captions / mono */
+  --aip-text-dim:       #AEAEB2;    /* dim mono labels (legends, hints) */
   --aip-text-mono:      #1D1D1F;
   --aip-text-link:      #0066CC;    /* apple-link blue */
 
@@ -24,9 +25,15 @@
   --aip-brand:        #1D1D1F;      /* primary buttons use deep ink */
   --aip-brand-hover:  #000000;
   --aip-accent:       #0066CC;      /* links only */
+  --aip-violet:       #7B68EE;      /* secondary accent — awards, AI highlight */
   --aip-warn:         #FF9F0A;
   --aip-danger:       #FF3B30;
   --aip-ok:           #34C759;
+
+  /* ── Section rhythm ───────────────────────────────── */
+  --aip-section-y:    144px;        /* full section vertical padding */
+  --aip-section-y-md: 96px;         /* mid */
+  --aip-section-y-sm: 64px;         /* tight */
 
   /* ── Spacing scale (8px baseline) ───────────────────── */
   --aip-s-1:  4px;
@@ -54,6 +61,8 @@
   --aip-fs-3xl:   48px;
   --aip-fs-4xl:   64px;
   --aip-fs-5xl:   80px;
+  --aip-fs-display: 96px;          /* page hero */
+  --aip-fs-mega:   112px;          /* first-screen mega */
   --aip-font-ui:   "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
   --aip-font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", Consolas, monospace;
 
@@ -302,11 +311,11 @@ div[class*="language-"] {
    ========================================================= */
 .aip-section {
   position: relative;
-  padding: var(--aip-s-10) var(--aip-s-5);
+  padding: var(--aip-section-y) var(--aip-s-5);
   background: var(--aip-bg-base);
 }
 .aip-section.alt { background: var(--aip-bg-alt); }
-.aip-section + .aip-section { padding-top: var(--aip-s-9); }
+.aip-section + .aip-section { padding-top: var(--aip-section-y); }
 
 /* =========================================================
    Section heading — Apple style: massive mono eyebrow, single-color title
@@ -701,12 +710,12 @@ div[class*="language-"] {
   margin-bottom: var(--aip-s-3);
 }
 .aip-about-hero h1 {
-  font-size: var(--aip-fs-5xl);
+  font-size: var(--aip-fs-display);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   margin: 0 0 var(--aip-s-5);
   color: var(--aip-text-primary);
-  line-height: 1.05;
+  line-height: 1.02;
 }
 .aip-about-hero p {
   font-size: var(--aip-fs-md);
@@ -792,4 +801,224 @@ div[class*="language-"] {
   .aip-cta-card { padding: var(--aip-s-10) var(--aip-s-5); }
   .aip-cta-actions { flex-direction: column; gap: var(--aip-s-3); }
   .aip-cta-actions .aip-btn { width: 100%; justify-content: center; }
+}
+
+/* =========================================================
+   Tabs — pill + underline variants
+   ========================================================= */
+.aip-tabs { width: 100%; }
+
+/* ── Pill — for short navigational tabs (2-6 items) ── */
+.aip-tabs.is-pill .aip-tabs-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--aip-bg-alt);
+  border: 1px solid var(--aip-border-subtle);
+  border-radius: var(--aip-radius-pill);
+}
+.aip-tabs.is-pill .aip-tab {
+  display: inline-flex; align-items: center; gap: var(--aip-s-2);
+  padding: 8px 18px;
+  background: transparent;
+  border: none;
+  border-radius: var(--aip-radius-pill);
+  font-family: var(--aip-font-mono);
+  font-size: var(--aip-fs-sm);
+  color: var(--aip-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--aip-dur-fast) var(--aip-ease-out);
+}
+.aip-tabs.is-pill .aip-tab:hover { color: var(--aip-text-primary); }
+.aip-tabs.is-pill .aip-tab.active {
+  background: var(--aip-bg-base);
+  color: var(--aip-text-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px var(--aip-border-subtle);
+}
+.aip-tabs.is-pill .aip-tab .tab-icon { font-size: 14px; opacity: 0.7; }
+
+/* ── Underline — for long doc sections ── */
+.aip-tabs.is-underline .aip-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aip-s-7);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--aip-border-subtle);
+}
+.aip-tabs.is-underline .aip-tab {
+  position: relative;
+  padding: var(--aip-s-3) 0;
+  background: transparent;
+  border: none;
+  font-family: var(--aip-font-ui);
+  font-size: var(--aip-fs-md);
+  font-weight: 400;
+  color: var(--aip-text-secondary);
+  cursor: pointer;
+  border-radius: 0;
+  box-shadow: none;
+  transition: color var(--aip-dur-fast) var(--aip-ease-out);
+}
+.aip-tabs.is-underline .aip-tab::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--aip-text-primary);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--aip-dur-base) var(--aip-ease-out);
+}
+.aip-tabs.is-underline .aip-tab:hover { color: var(--aip-text-primary); }
+.aip-tabs.is-underline .aip-tab.active { color: var(--aip-text-primary); font-weight: 500; }
+.aip-tabs.is-underline .aip-tab.active::after { transform: scaleX(1); }
+
+.aip-tabs-panels { margin-top: var(--aip-s-7); }
+
+/* =========================================================
+   Scroll hint — Apple-style "scroll" indicator under hero
+   ========================================================= */
+.aip-scroll-hint {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--aip-s-3);
+  margin-top: var(--aip-s-9);
+  color: var(--aip-text-tertiary);
+  font-family: var(--aip-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+}
+.aip-scroll-hint .arrow {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--aip-text-tertiary), transparent);
+  position: relative;
+  animation: aip-scroll-pulse 2.4s infinite;
+}
+@keyframes aip-scroll-pulse {
+  0%   { opacity: 0.3; transform: translateY(-4px); }
+  50%  { opacity: 1;   transform: translateY(0); }
+  100% { opacity: 0.3; transform: translateY(4px); }
+}
+
+/* =========================================================
+   Bento grid — capabilities page (was missing!)
+   ========================================================= */
+.aip-bento {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--aip-s-4);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--aip-s-5);
+}
+.aip-bento-tile {
+  background: var(--aip-bg-elevated);
+  border: 1px solid var(--aip-border-subtle);
+  border-radius: var(--aip-radius-xl);
+  padding: var(--aip-s-8) var(--aip-s-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--aip-s-3);
+  grid-column: span 6;
+  transition: border-color var(--aip-dur-base) var(--aip-ease-out),
+              transform var(--aip-dur-base) var(--aip-ease-out);
+}
+.aip-bento-tile:hover { border-color: var(--aip-text-primary); }
+.aip-bento-tile.is-1 { grid-column: span 8; }
+.aip-bento-tile.is-2 { grid-column: span 4; }
+.aip-bento-tile.is-3 { grid-column: span 4; }
+.aip-bento-tile.is-4 { grid-column: span 8; }
+.aip-bento-tile.is-5 { grid-column: span 12; }
+
+.aip-bento-tile .head { display: flex; justify-content: space-between; align-items: baseline; }
+.aip-bento-tile .icon {
+  font-family: var(--aip-font-mono);
+  font-size: 28px;
+  color: var(--aip-text-primary);
+}
+.aip-bento-tile .num {
+  font-family: var(--aip-font-mono);
+  font-size: var(--aip-fs-sm);
+  color: var(--aip-text-tertiary);
+  letter-spacing: 0.10em;
+}
+.aip-bento-tile .name {
+  font-size: var(--aip-fs-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: var(--aip-s-3);
+}
+.aip-bento-tile .en {
+  font-family: var(--aip-font-mono);
+  font-size: var(--aip-fs-xs);
+  color: var(--aip-text-tertiary);
+  letter-spacing: 0.10em;
+  margin-bottom: var(--aip-s-3);
+}
+.aip-bento-tile .desc {
+  font-size: var(--aip-fs-base);
+  color: var(--aip-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+.aip-bento-tile .pts {
+  list-style: none;
+  padding: 0;
+  margin: var(--aip-s-3) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px var(--aip-s-3);
+}
+.aip-bento-tile .pts li {
+  font-family: var(--aip-font-mono);
+  font-size: var(--aip-fs-xs);
+  color: var(--aip-text-secondary);
+  padding: 4px 10px;
+  border: 1px solid var(--aip-border-subtle);
+  border-radius: var(--aip-radius-pill);
+  background: var(--aip-bg-base);
+}
+
+@media (max-width: 1024px) {
+  .aip-bento-tile { grid-column: span 12 !important; }
+}
+
+/* =========================================================
+   Proof strip — compact 4-stat row (Capabilities hero)
+   ========================================================= */
+.aip-proof-strip {
+  display: flex;
+  justify-content: center;
+  gap: var(--aip-s-12);
+  padding: var(--aip-s-6) 0;
+  border-top: 1px solid var(--aip-border-subtle);
+  border-bottom: 1px solid var(--aip-border-subtle);
+}
+.aip-proof-strip .item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--aip-s-1);
+  min-width: 100px;
+}
+.aip-proof-strip .v {
+  font-size: var(--aip-fs-2xl);
+  font-weight: 600;
+  color: var(--aip-text-primary);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.aip-proof-strip .l {
+  font-family: var(--aip-font-mono);
+  font-size: var(--aip-fs-xs);
+  color: var(--aip-text-secondary);
+  letter-spacing: 0.06em;
 }

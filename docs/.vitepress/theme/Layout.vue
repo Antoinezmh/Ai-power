@@ -32,6 +32,13 @@ onMounted(() => {
 onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 const goLogout = () => { auth.logout(); router.go('/') }
+
+/**
+ * 已登录状态下的“进入应用”跳转地址。
+ * - 如果设置了 VITE_APP_URL（内网部署后），点击跳到服务器应用
+ * - 否则跳到 vitepress 内部的工作台 /app/
+ */
+const appUrl = (import.meta.env.VITE_APP_URL as string | undefined)?.trim() || '/app/'
 </script>
 
 <template>
@@ -47,7 +54,7 @@ const goLogout = () => { auth.logout(); router.go('/') }
           <span class="aip-kbd-group"><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd><kbd>K</kbd></span>
         </button>
         <template v-if="auth.isAuthenticated.value">
-          <a class="aip-user" href="/app/">
+          <a class="aip-user" :href="appUrl">
             <span class="dot" />
             {{ auth.state.user?.displayName }}
           </a>

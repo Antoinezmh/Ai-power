@@ -21,6 +21,8 @@ import ToolList from './components/ToolList.vue'
 import GateCard from './components/GateCard.vue'
 import FilterBar from './components/FilterBar.vue'
 import ToolsBrowser from './components/ToolsBrowser.vue'
+import HomePage from './components/HomePage.vue'
+import Tabs from './components/Tabs.vue'
 
 export default {
   extends: DefaultTheme,
@@ -43,6 +45,8 @@ export default {
     app.component('GateCard', GateCard)
     app.component('FilterBar', FilterBar)
     app.component('ToolsBrowser', ToolsBrowser)
+    app.component('HomePage', HomePage)
+    app.component('Tabs', Tabs)
   },
   setup() {
     // Force scroll-to-top on every route change so SPA navigation

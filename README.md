@@ -86,3 +86,26 @@ ai-power/
 ## License
 
 Internal use only. Not for public distribution.
+
+---
+
+## 部署到内网（仅需要登录壳）
+
+本项目作为「登录壳」部署到内网服务器后，访问流程为：
+
+```
+浏览器 → vitepress 公开页 / 登录页 → demo/demo123 → 跳转到内网应用
+```
+
+配置 `.env`：
+
+```bash
+cp .env.example .env
+
+# 登录成功后跳转的目标应用 URL
+# - 留空：登录后跳到 vitepress 内部 /app/ 工作台（默认）
+# - 设置后：浏览器跳转到该 URL，例如：
+VITE_APP_URL=https://your-app.internal.company.local
+```
+
+> 账号体系（demo/demo123）仅为占位。内网部署后，接入公司 LDAP/SSO 后修改 `server/app/main.py` 中的 `AIPOWER_USERS` 环境变量即可。

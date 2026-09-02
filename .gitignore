@@ -18,6 +18,7 @@ _tmp/
 *.b64
 *.log
 *.tmp
+*.bak
 
 # OS / IDE
 .DS_Store
