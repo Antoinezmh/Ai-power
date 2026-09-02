@@ -74,16 +74,13 @@ withDefaults(defineProps<Props>(), {
   font-size: 64px;
   color: var(--aip-brand);
   margin-bottom: 16px;
-  text-shadow: 0 0 24px rgba(77, 163, 255, 0.5);
 }
 .aip-hero-title {
   font-size: 56px;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 12px;
-  background: linear-gradient(120deg, var(--aip-text-primary), var(--aip-brand) 50%, var(--aip-accent));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--aip-text-primary);
 }
 .aip-hero-sub {
   font-family: var(--aip-font-mono);

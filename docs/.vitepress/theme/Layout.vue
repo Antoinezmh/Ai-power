@@ -86,7 +86,6 @@ const goLogout = () => { auth.logout(); router.go('/') }
 .aip-search-trigger {
   display: inline-flex; align-items: center; gap: var(--aip-s-2);
   background: var(--aip-glass-1);
-  backdrop-filter: blur(10px);
   border: 1px solid var(--aip-glass-border);
   color: var(--aip-text-secondary);
   padding: 6px 10px 6px 12px;
@@ -121,7 +120,6 @@ const goLogout = () => { auth.logout(); router.go('/') }
   display: inline-flex; align-items: center; gap: var(--aip-s-2);
   padding: 6px 12px;
   background: var(--aip-glass-1);
-  backdrop-filter: blur(10px);
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-full);
   text-decoration: none;
@@ -131,7 +129,6 @@ const goLogout = () => { auth.logout(); router.go('/') }
 .aip-user .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--aip-ok);
-  box-shadow: 0 0 8px var(--aip-ok);
 }
 
 .aip-btn-logout {
@@ -164,18 +161,15 @@ const goLogout = () => { auth.logout(); router.go('/') }
   border-radius: var(--aip-radius-full);
   text-decoration: none;
   transition: all var(--aip-dur-fast) var(--aip-ease-out);
-  box-shadow: 0 0 0 0 rgba(91, 108, 255, 0);
 }
 .aip-login:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(91, 108, 255, 0.35);
 }
 
 /* Search overlay */
 .aip-search-overlay {
   position: fixed; inset: 0;
-  background: rgba(7, 9, 15, 0.65);
-  backdrop-filter: blur(8px);
+  background: rgba(29, 29, 31, 0.40);
   z-index: 9999;
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: 14vh;
@@ -183,10 +177,8 @@ const goLogout = () => { auth.logout(); router.go('/') }
 .aip-search-modal {
   width: min(640px, 90vw);
   background: var(--aip-glass-3);
-  backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--aip-glass-border-hi);
   border-radius: var(--aip-radius-lg);
-  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.5), 0 0 32px rgba(91, 108, 255, 0.15);
   overflow: hidden;
 }
 .aip-search-input-wrap {

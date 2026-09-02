@@ -169,10 +169,7 @@ const openTool = (t: Tool) => {
 .ws {
   position: relative;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(91,108,255,0.08), transparent 70%),
-    radial-gradient(ellipse 50% 30% at 100% 100%, rgba(20,184,166,0.06), transparent 70%),
-    var(--aip-bg-base);
+  background: var(--aip-bg-base);
   color: var(--aip-text-primary);
   font-family: var(--aip-font-ui);
 }
@@ -182,10 +179,8 @@ const openTool = (t: Tool) => {
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; gap: var(--aip-s-6);
   padding: var(--aip-s-3) var(--aip-s-6);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px) saturate(160%);
+  background: var(--aip-bg-base);
   border-bottom: 1px solid var(--aip-glass-border);
-  box-shadow: var(--aip-shadow-sm);
 }
 .ws-brand {
   display: inline-flex; align-items: center; gap: var(--aip-s-3);
@@ -203,7 +198,6 @@ const openTool = (t: Tool) => {
   border: 1px solid var(--aip-glass-border-hi);
   border-radius: var(--aip-radius-sm);
   color: var(--aip-brand);
-  box-shadow: var(--aip-shadow-sm);
 }
 .ws-brand .tag { font-size: var(--aip-fs-xs); color: var(--aip-text-secondary); }
 
@@ -230,7 +224,6 @@ const openTool = (t: Tool) => {
 .ws-search input:focus {
   border-color: var(--aip-brand);
   background: #FFFFFF;
-  box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.12);
 }
 .ws-search.focused .search-ic,
 .ws-search input:focus ~ .search-ic { color: var(--aip-brand); }
@@ -244,20 +237,18 @@ const openTool = (t: Tool) => {
   background: #FFFFFF;
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-full);
-  box-shadow: var(--aip-shadow-sm);
 }
 .ws-user .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--aip-ok);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
 }
 .ws-user .role-pill {
   font-family: var(--aip-font-mono);
   font-size: 10px;
   letter-spacing: 0.10em;
   padding: 2px 6px;
-  background: rgba(91, 108, 255, 0.08);
-  border: 1px solid rgba(91, 108, 255, 0.20);
+  background: rgba(0, 102, 204, 0.06);
+  border: 1px solid rgba(0, 102, 204, 0.20);
   border-radius: var(--aip-radius-full);
   color: var(--aip-brand);
   text-transform: uppercase;
@@ -307,8 +298,7 @@ const openTool = (t: Tool) => {
 .ws-side {
   border-right: 1px solid var(--aip-glass-border);
   padding: var(--aip-s-6) var(--aip-s-3);
-  background: rgba(255, 255, 255, 0.60);
-  backdrop-filter: blur(10px);
+  background: var(--aip-bg-base);
   display: flex;
   flex-direction: column;
 }
@@ -341,8 +331,8 @@ const openTool = (t: Tool) => {
 }
 .side-item.active {
   color: var(--aip-brand);
-  background: rgba(91, 108, 255, 0.08);
-  border-color: rgba(91, 108, 255, 0.30);
+  background: rgba(0, 102, 204, 0.06);
+  border-color: rgba(0, 102, 204, 0.30);
 }
 .side-item .ic {
   font-size: 14px; width: 16px; text-align: center;
@@ -417,7 +407,6 @@ const openTool = (t: Tool) => {
   background: #FFFFFF;
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-lg);
-  box-shadow: var(--aip-shadow-sm);
   padding: var(--aip-s-5);
   cursor: pointer;
   transition: all var(--aip-dur-base) var(--aip-ease-out);
@@ -435,8 +424,7 @@ const openTool = (t: Tool) => {
   transition: transform var(--aip-dur-slow) var(--aip-ease-out);
 }
 .tcard:hover {
-  border-color: rgba(91, 108, 255, 0.30);
-  box-shadow: var(--aip-shadow-md);
+  border-color: rgba(0, 102, 204, 0.30);
   transform: translateY(-3px);
 }
 .tcard:hover::before { transform: scaleY(1); }
@@ -467,7 +455,6 @@ const openTool = (t: Tool) => {
 }
 .tcard-status {
   width: 8px; height: 8px; border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
   flex-shrink: 0;
 }
 .tcard-desc {

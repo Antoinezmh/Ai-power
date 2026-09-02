@@ -119,7 +119,7 @@ const highlights = [
       <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
               <defs>
                 <pattern id="lp" width="48" height="48" patternUnits="userSpaceOnUse">
-                  <path d="M 48 0 L 0 0 48 48Z" fill="none" stroke="rgba(91,108,255,0.06)" stroke-width="1"/>
+                  <path d="M 48 0 L 0 0 48 48Z" fill="none" stroke="rgba(0, 102, 204, 0.06)" stroke-width="1"/>
                 </pattern>
               </defs>
               <rect width="1440" height="900" fill="url(#lp)"/>
@@ -280,10 +280,7 @@ const highlights = [
   position: relative;
   min-height: 100vh;
   display: block;
-  background:
-    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(91,108,255,0.10), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139,92,246,0.10), transparent 60%),
-    var(--aip-bg-base);
+  background: var(--aip-bg-base);
   overflow-x: hidden;
 }
 .bg-deco { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
@@ -306,11 +303,7 @@ const highlights = [
   display: flex; flex-direction: column;
   padding: var(--aip-s-5) var(--aip-s-10) var(--aip-s-8);
   border-right: 1px solid var(--aip-glass-border);
-  background:
-    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(91,108,255,0.06), transparent 70%),
-    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(139,92,246,0.05), transparent 70%),
-    rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px);
+  background: var(--aip-bg-base);
 }
 
 /* Push the footer to the bottom of the column */
@@ -332,7 +325,6 @@ const highlights = [
   border: 1px solid var(--aip-glass-border-hi);
   border-radius: var(--aip-radius-sm);
   color: var(--aip-brand);
-  box-shadow: var(--aip-shadow-sm);
 }
 
 .login-back {
@@ -352,15 +344,11 @@ const highlights = [
   background: #FFFFFF;
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-xl);
-  box-shadow: var(--aip-shadow-xl);
   transition: border-color var(--aip-dur-base) var(--aip-ease-out),
               box-shadow var(--aip-dur-base) var(--aip-ease-out);
 }
 .login-card.is-focused {
-  border-color: rgba(91, 108, 255, 0.40);
-  box-shadow:
-    var(--aip-shadow-xl),
-    0 0 0 4px rgba(91, 108, 255, 0.10);
+  border-color: var(--aip-text-primary);
 }
 
 .login-head { margin-bottom: var(--aip-s-8); }
@@ -402,7 +390,6 @@ const highlights = [
 .field.focused input {
   border-color: var(--aip-brand);
   background: #FFFFFF;
-  box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.12);
 }
 
 .opts {
@@ -454,7 +441,7 @@ const highlights = [
   border-radius: var(--aip-radius-xs);
   transition: background var(--aip-dur-fast) var(--aip-ease-out);
 }
-.dh-row:hover { background: rgba(91, 108, 255, 0.06); }
+.dh-row:hover { background: rgba(0, 102, 204, 0.04); }
 .dh-row .k {
   font-family: var(--aip-font-mono);
   font-size: var(--aip-fs-xs);
@@ -502,7 +489,6 @@ const highlights = [
 .lp-foot-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--aip-ok);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.20);
   animation: lp-fb-pulse 2.4s infinite;
 }
 @keyframes lp-fb-pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
@@ -525,10 +511,7 @@ const highlights = [
   position: absolute;
   top: -10%; right: -20%;
   width: 600px; height: 600px;
-  background:
-    radial-gradient(circle, rgba(91,108,255,0.18), transparent 60%),
-    radial-gradient(circle at 70% 30%, rgba(139,92,246,0.10), transparent 60%);
-  filter: blur(40px);
+  display: none;
   z-index: 0;
   pointer-events: none;
 }
@@ -551,9 +534,7 @@ const highlights = [
   color: var(--aip-text-primary);
 }
 .lp-headline .accent {
-  background: var(--aip-neon-1);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--aip-text-link);
 }
 
 .lp-sub {
@@ -571,18 +552,16 @@ const highlights = [
 }
 .award-card {
   display: flex; align-items: stretch;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--aip-bg-elevated);
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-lg);
-  box-shadow: var(--aip-shadow-sm);
   overflow: hidden;
   transition: transform var(--aip-dur-base) var(--aip-ease-out),
               box-shadow var(--aip-dur-base) var(--aip-ease-out);
 }
 .award-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--aip-shadow-md);
-  border-color: rgba(91, 108, 255, 0.30);
+  border-color: rgba(0, 102, 204, 0.30);
 }
 .award-rank {
   flex-shrink: 0;
@@ -592,9 +571,7 @@ const highlights = [
   font-size: 32px;
   font-weight: 700;
   color: var(--accent, var(--aip-brand));
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--accent, var(--aip-brand)) 10%, transparent),
-    color-mix(in srgb, var(--accent, var(--aip-brand)) 0%, transparent));
+  background: var(--aip-bg-alt);
   border-right: 1px solid var(--aip-glass-border);
 }
 .award-body {
@@ -662,7 +639,6 @@ const highlights = [
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--aip-ok);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.20);
   animation: lp-pulse 2s infinite;
 }
 @keyframes lp-pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
@@ -687,7 +663,6 @@ const highlights = [
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--aip-brand);
-  box-shadow: 0 0 0 3px var(--aip-bg-base);
 }
 .activity-who {
   font-family: var(--aip-font-mono);
@@ -715,7 +690,7 @@ const highlights = [
   gap: var(--aip-s-3);
 }
 .hl-card {
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--aip-bg-elevated);
   border: 1px solid var(--aip-glass-border);
   border-radius: var(--aip-radius-md);
   padding: var(--aip-s-4);

@@ -49,7 +49,7 @@ const gates = props.gates ?? defaultGates
   top: 24px;
   bottom: 24px;
   width: 2px;
-  background: linear-gradient(180deg, var(--aip-brand), var(--aip-accent));
+  background: var(--aip-border);
   opacity: 0.4;
 }
 </style>

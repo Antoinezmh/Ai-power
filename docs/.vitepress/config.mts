@@ -5,7 +5,7 @@ export default defineConfig({
   description: 'Power Device Engineering, Engineered.',
   cleanUrls: true,
   lastUpdated: true,
-  appearance: 'dark',
+  appearance: 'light',
 
   ignoreDeadLinks: true,
 
