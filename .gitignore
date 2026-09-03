@@ -1,0 +1,15 @@
+# Runtime state and local secrets
+.env
+.env.*
+!.env.production.example
+runtime/**
+!runtime/.gitkeep
+
+# Node/Python build products
+node_modules/
+dist/
+.turbo/
+*.py[cod]
+__pycache__/
+backend/.venv/
+backend/*.db

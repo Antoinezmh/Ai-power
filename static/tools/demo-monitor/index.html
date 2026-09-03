@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>器件状态监视器</title>
+    <style>
+      body { margin: 0; background: #f5f5f7; color: #1d1d1f; font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 760px; margin: 12vh auto; padding: 48px; background: white; border-radius: 24px; box-shadow: 0 16px 45px rgba(0,0,0,.08); }
+      .tag { color: #0071e3; font-size: 13px; font-weight: 600; letter-spacing: .08em; }
+      h1 { font-size: 38px; margin: 12px 0; } p { color: #6e6e73; line-height: 1.7; }
+      button { background: #0071e3; border: 0; border-radius: 999px; color: white; padding: 12px 18px; cursor: pointer; }
+      #result { margin-top: 20px; font-family: ui-monospace, monospace; color: #2d7d46; }
+    </style>
+  </head>
+  <body><main>
+    <div class="tag">STATIC TOOL / DEMO</div>
+    <h1>器件状态监视器</h1>
+    <p>该页面由平台的 <code>/tools/</code> 挂载目录直接提供，不需要独立容器。</p>
+    <button id="health">检查平台 API</button><div id="result"></div>
+  </main>
+  <script>
+    document.querySelector('#health').onclick = async () => {
+      const result = document.querySelector('#result');
+      result.textContent = '检查中…';
+      try { result.textContent = JSON.stringify(await (await fetch('/api/health')).json()); }
+      catch (error) { result.textContent = `请求失败：${error.message}`; }
+    };
+  </script></body>
+</html>

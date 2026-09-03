@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* === 品牌主色 (OKLCH) === */
+    --color-primary-50: oklch(0.97 0.02 250);
+    --color-primary-100: oklch(0.94 0.04 250);
+    --color-primary-200: oklch(0.88 0.08 250);
+    --color-primary-300: oklch(0.78 0.14 250);
+    --color-primary-400: oklch(0.68 0.18 250);
+    --color-primary-500: oklch(0.6 0.2 250);
+    --color-primary-600: oklch(0.52 0.18 250);
+    --color-primary-700: oklch(0.44 0.16 250);
+    --color-primary-800: oklch(0.36 0.12 250);
+    --color-primary-900: oklch(0.28 0.08 250);
+    --color-primary-950: oklch(0.18 0.04 250);
+
+    /* === 语义色彩（浅色模式优化） === */
+    --color-surface: #f6f8f7; /* 主背景，柔和灰白 */
+    --color-surface-elevated: #ffffff; /* 卡片、弹窗保持纯白 */
+    --color-surface-subtle: #f1f5f9; /* 次级背景 */
+    --color-surface-hover: #f1f5f9;
+    --color-surface-active: #e2e8f0;
+    --color-surface-inset: #f1f5f9;
+
+    --color-text-primary: #0f172a; /* 深色文字 */
+    --color-text-secondary: #475569; /* 次要文字 */
+    --color-text-tertiary: #94a3b8;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #ffffff;
+
+    --color-border-default: #e2e8f0; /* 边框更柔和 */
+    --color-border-subtle: #f1f5f9;
+    --color-border-hover: #cbd5e1;
+
+    /* === 功能色 === */
+    --color-success: oklch(0.65 0.18 145);
+    --color-success-bg: oklch(0.95 0.04 145);
+    --color-warning: oklch(0.75 0.16 85);
+    --color-warning-bg: oklch(0.96 0.04 85);
+    --color-danger: oklch(0.58 0.22 25);
+    --color-danger-bg: oklch(0.94 0.04 25);
+    --color-info: oklch(0.65 0.16 250);
+    --color-info-bg: oklch(0.95 0.04 250);
+
+    /* === 图表色板 === */
+    --color-chart-1: oklch(0.6 0.2 250);
+    --color-chart-2: oklch(0.65 0.18 320);
+    --color-chart-3: oklch(0.7 0.16 160);
+    --color-chart-4: oklch(0.72 0.14 45);
+    --color-chart-5: oklch(0.55 0.18 280);
+
+    /* === 阴影 === */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06),
+      0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08),
+      0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08),
+      0 8px 10px -6px rgb(0 0 0 / 0.04);
+    --shadow-glow: 0 0 20px -5px var(--color-primary-500 / 0.3);
+  }
+
+  .dark {
+    --color-surface: #09090b;
+    --color-surface-elevated: #18181b;
+    --color-surface-subtle: #27272a;
+    --color-surface-hover: #27272a;
+    --color-surface-active: #3f3f46;
+    --color-surface-inset: #09090b;
+
+    --color-text-primary: #fafafa;
+    --color-text-secondary: #a1a1aa;
+    --color-text-tertiary: #71717a;
+    --color-text-muted: #71717a;
+    --color-text-inverse: #18181b;
+
+    --color-border-default: #27272a;
+    --color-border-subtle: #18181b;
+    --color-border-hover: #3f3f46;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4),
+      0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5),
+      0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5),
+      0 8px 10px -6px rgb(0 0 0 / 0.4);
+    --shadow-glow: 0 0 25px -5px var(--color-primary-500 / 0.25);
+  }
+}
+
+/* 自定义动画（不变） */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-subtle) 25%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* 基础样式 */
+* {
+  border-color: var(--color-border-default);
+}
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

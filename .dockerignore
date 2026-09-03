@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+**/dist/
+backend/.venv/
+runtime/
+.git/
+.env
+.env.*
+*.db
