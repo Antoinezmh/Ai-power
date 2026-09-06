@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import logging
 import re
 import uuid
 from urllib.parse import urlparse
@@ -12,6 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.agent_config import AgentConfig
 from app.models.tool import Tool
+from app.services.knowledge_service import KnowledgeService
+
+logger = logging.getLogger(__name__)
 
 
 class AgentService:
@@ -84,20 +88,25 @@ class AgentService:
         ]
 
     @classmethod
-    async def reply(cls, db: AsyncSession, message: str) -> tuple[str, str, list[dict]]:
+    async def reply(cls, db: AsyncSession, message: str) -> tuple[str, str, list[dict], list[dict]]:
         tools = list((await db.execute(select(Tool).where(Tool.is_active.is_(True)).limit(100))).scalars().all())
         suggestions = cls.suggest_tools(message, tools)
+        knowledge_matches = KnowledgeService.search(message)
+        sources = [{"title": item.title, "source": item.source, "excerpt": item.excerpt} for item in knowledge_matches]
         config = await cls.get_config(db)
         if not config or not config.enabled or not config.encrypted_api_key:
             suffix = "我先为你匹配了相关工具，可直接打开继续处理。" if suggestions else "目前尚未配置 Agent API Key；平台管理员完成配置后即可启用真实对话。"
-            return f"我已理解你的问题：{message}\n\n{suffix}", "catalog", suggestions
+            return f"我已理解你的问题：{message}\n\n{suffix}", "catalog", suggestions, sources
         try:
             api_key = cls._cipher().decrypt(config.encrypted_api_key.encode("utf-8")).decode("utf-8")
             catalog = "\n".join(f"- {tool.name}: {tool.description or ''}" for tool in tools)
+            knowledge_context = "\n\n".join(
+                f"[来源：{item.title} / {item.source}]\n{item.excerpt}" for item in knowledge_matches
+            ) or "（当前知识库没有与问题直接匹配的内容。）"
             payload = {
                 "model": config.model,
                 "messages": [
-                    {"role": "system", "content": "你是功率器件部门 AI 助手。用简洁中文回答，只提供建议，不自动执行工具。可推荐的工具目录：\n" + catalog},
+                    {"role": "system", "content": "你是功率器件部门 AI 助手，同时熟悉本平台的使用规范。用简洁中文回答，只提供建议，不自动执行工具、修改权限或启动服务。优先依据下面的受控平台知识回答；资料不足时明确说明。若使用了平台知识，请在回答末尾列出“参考：来源标题”。\n\n平台知识：\n" + knowledge_context + "\n\n可推荐的工具目录：\n" + catalog},
                     {"role": "user", "content": message},
                 ],
                 "temperature": 0.3,
@@ -106,7 +115,8 @@ class AgentService:
                 response = await client.post(f"{config.base_url}/chat/completions", headers={"Authorization": f"Bearer {api_key}"}, json=payload)
                 response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"].strip()
-            return content, "agent", suggestions
+            return content, "agent", suggestions, sources
         except Exception:
+            logger.exception("Agent provider request failed")
             suffix = "我已保留工具匹配结果，你可先从下方工具卡开始。" if suggestions else "请联系平台管理员检查 Agent 配置。"
-            return f"Agent 暂时不可用。{suffix}", "catalog", suggestions
+            return f"Agent 暂时不可用。{suffix}", "catalog", suggestions, sources

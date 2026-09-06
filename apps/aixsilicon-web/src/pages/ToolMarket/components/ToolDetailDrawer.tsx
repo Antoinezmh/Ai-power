@@ -6,9 +6,10 @@ interface ToolDetailDrawerProps {
     tool: Tool | null;
     open: boolean;
     onClose: () => void;
+    onUseTool: (toolId: string) => void;
 }
 
-export function ToolDetailDrawer({ tool, open, onClose }: ToolDetailDrawerProps) {
+export function ToolDetailDrawer({ tool, open, onClose, onUseTool }: ToolDetailDrawerProps) {
     if (!tool) return null;
 
     return (
@@ -75,7 +76,7 @@ export function ToolDetailDrawer({ tool, open, onClose }: ToolDetailDrawerProps)
                         <Button variant="secondary" onClick={onClose}>
                             关闭
                         </Button>
-                        <Button variant="primary" className="gap-2">
+                        <Button variant="primary" className="gap-2" onClick={() => onUseTool(tool.id)}>
                             使用工具 →
                         </Button>
                     </div>

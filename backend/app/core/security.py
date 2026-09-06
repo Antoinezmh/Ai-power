@@ -1,5 +1,6 @@
 import bcrypt
-from jose import jwt, JWTError
+import jwt
+from jwt import InvalidTokenError
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from app.core.config import settings
@@ -35,5 +36,5 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
-    except JWTError:
+    except InvalidTokenError:
         return None

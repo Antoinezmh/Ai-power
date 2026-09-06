@@ -5,6 +5,8 @@ from app.core.database import get_db
 from app.core.security import decode_token
 from app.services.user_service import UserService
 from app.models.user import User
+from app.core.config import settings
+from app.services.redis_service import RedisService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
@@ -15,6 +17,14 @@ async def get_current_user(
     payload = decode_token(token)
     if not payload or payload.get("type") != "access":
         raise HTTPException(status_code=401, detail="Invalid token")
+    try:
+        if await RedisService.is_token_blacklisted(token):
+            raise HTTPException(status_code=401, detail="Token revoked")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if settings.REQUIRE_REDIS:
+            raise HTTPException(status_code=503, detail="Authentication service unavailable") from exc
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")

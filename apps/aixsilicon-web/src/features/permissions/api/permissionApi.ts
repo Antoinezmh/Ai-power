@@ -21,6 +21,7 @@ export interface Role {
     created_at: string;
     updated_at: string;
     user_count?: number;
+    is_default?: boolean;
 }
 
 export interface User {

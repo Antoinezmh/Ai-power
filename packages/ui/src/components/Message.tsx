@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom/client";
+import { useEffect } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { cn } from "../lib/cn";
 
 export type MessageType = "success" | "error" | "warning" | "info";
@@ -26,7 +26,7 @@ const typeClassMap: Record<MessageType, string> = {
     info: "bg-blue-50 border-blue-400 text-blue-800",
 };
 
-let messageRoot: ReactDOM.Root | null = null;
+let messageRoot: Root | null = null;
 
 function getMessageContainer() {
     let container = document.getElementById("message-container");
@@ -70,7 +70,7 @@ export function message(options: MessageOptions | string) {
     const { content, type = "info", duration = 3000 } = opts;
 
     const container = getMessageContainer();
-    const root = messageRoot || ReactDOM.createRoot(container);
+    const root = messageRoot || createRoot(container);
     messageRoot = root;
 
     const close = () => {

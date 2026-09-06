@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aipower}
+      POSTGRES_USER: ${POSTGRES_USER:-aipower}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [aipower]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
+
   api:
     build:
       context: ./backend
@@ -6,19 +24,33 @@ services:
       APP_ENV: production
       ENV: production
       DEBUG: "false"
+      SEED_DEMO_DATA: "false"
+      REQUIRE_REDIS: "true"
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
-      DATABASE_URL: sqlite+aiosqlite:////data/db/aipower.db
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       REDIS_URL: redis://redis:6379/0
       FILE_STORAGE_ROOT: /data/files
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env}
     volumes:
-      - ./runtime/files:/data/files
-      - ./runtime/sqlite:/data/db
+      - file-data:/data/files
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     restart: unless-stopped
     networks: [aipower]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
 
   redis:
     image: redis:7-alpine
@@ -32,6 +64,8 @@ services:
       retries: 10
     restart: unless-stopped
     networks: [aipower]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
 
   demo-dynamic:
     build:
@@ -39,24 +73,35 @@ services:
     environment:
       TOOL_DATA_DIR: /data
     volumes:
-      - ./runtime/demo-dynamic:/data
+      - demo-data:/data
     restart: unless-stopped
     networks: [aipower]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
 
   nginx:
     build:
       context: .
       dockerfile: ./deploy/web.Dockerfile
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_BIND_ADDRESS:-0.0.0.0}:${WEB_PORT:-8080}:80"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static/tools:/usr/share/nginx/html/tools:ro
     depends_on:
-      - api
-      - demo-dynamic
+      api:
+        condition: service_healthy
+      demo-dynamic:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
     networks: [aipower]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
 
 networks:
   aipower:
@@ -64,3 +109,6 @@ networks:
 
 volumes:
   redis-data:
+  postgres-data:
+  file-data:
+  demo-data:

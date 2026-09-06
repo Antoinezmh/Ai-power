@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Brand } from '@/components/Brand';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Bot,
@@ -50,7 +51,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { hasPermission, loading } = usePermission();
-  const { user, clearAuth } = useAuthStore();
+  const { user, refreshToken, clearAuth } = useAuthStore();
   const clearUser = useUserStore((state) => state.clearUser);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -66,16 +67,15 @@ export default function Header() {
   const displayName = user?.full_name || user?.username || '用户';
 
   const handleLogout = async () => {
-    try { await authApi.logout(); } catch { /* local cleanup remains authoritative */ }
+    try { await authApi.logout(refreshToken); } catch { /* local cleanup remains authoritative */ }
     clearAuth(); clearUser(); navigate('/login', { replace: true });
   };
   const closeMenu = () => setMenuOpen(false);
 
   return <header className="sticky top-0 z-40 border-b border-border-subtle bg-surface-elevated/85 backdrop-blur-xl">
-    <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-4 px-4 sm:px-6">
+    <div className="mx-auto flex h-[72px] w-full items-center gap-4 px-4 sm:px-6">
       <NavLink to="/dashboard" className="flex shrink-0 items-center gap-2.5" onClick={closeMenu}>
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#111827] text-xs font-semibold tracking-tight text-white">AP</span>
-        <span className="hidden text-sm font-semibold tracking-[0.12em] text-text-primary sm:block">AI POWER</span>
+        <Brand />
       </NavLink>
 
       <nav className="hidden items-center gap-1 md:flex">

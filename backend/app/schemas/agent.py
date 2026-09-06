@@ -30,7 +30,14 @@ class ToolSuggestion(BaseModel):
     reason: str
 
 
+class KnowledgeSource(BaseModel):
+    title: str
+    source: str
+    excerpt: str
+
+
 class ChatResponse(BaseModel):
     reply: str
     mode: str
-    suggestions: list[ToolSuggestion] = []
+    suggestions: list[ToolSuggestion] = Field(default_factory=list)
+    sources: list[KnowledgeSource] = Field(default_factory=list)

@@ -12,3 +12,4 @@ from .project import Project            # 修复：补导出，使建表/迁移�
 from .file_asset import FileAsset       # 文件中心：文件资产表
 from .file_permission import FilePermission  # 文件中心：访问授权表（按用户隔离）
 from .agent_config import AgentConfig
+from .tool_grant import ToolGrant

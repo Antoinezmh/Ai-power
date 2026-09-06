@@ -1,0 +1,6 @@
+/* Fluid section widths; retain readable text measures inside each section. */
+.landing-hero,.landing-section,.landing-cta{width:100%;max-width:none;padding-inline:clamp(20px,4vw,80px)}
+.capability-grid,.pipeline{max-width:none}
+.landing-ai{gap:clamp(32px,5vw,96px)}
+.landing-nav,.landing-footer{padding-inline:clamp(20px,4vw,80px)}
+@media(max-width:560px){.landing-actions{flex-wrap:wrap;justify-content:center}.landing-hero h1{font-size:clamp(40px,11vw,58px)}}

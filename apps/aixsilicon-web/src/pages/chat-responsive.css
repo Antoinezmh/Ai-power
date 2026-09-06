@@ -1,0 +1,29 @@
+.agent-page{max-width:none;width:100%;padding:0;container-type:inline-size}
+.agent-hero{gap:16px;flex-wrap:wrap;padding:0 4px 20px}
+.agent-hero>div:first-child{min-width:0;flex:1 1 640px}
+.agent-hero h1{max-width:100%;font-size:clamp(22px,2.4cqw,38px);line-height:1.3;white-space:normal}
+.agent-hero h1 em{font-family:inherit;font-style:normal}
+.agent-status{flex-shrink:0}
+.agent-workspace{grid-template-columns:minmax(0,1fr) clamp(250px,19%,340px);border:1px solid var(--color-border-default);border-radius:20px;box-shadow:0 8px 28px rgb(15 23 42 / .04);background:var(--color-surface-elevated)}
+.agent-thread{background:var(--color-surface-elevated);padding:24px clamp(16px,3%,48px)}
+.agent-message{width:100%;margin-bottom:24px;gap:12px;align-items:flex-start}
+.agent-message-body{min-width:0;overflow-wrap:anywhere}
+.agent-message--assistant .agent-message-body{min-width:0;width:fit-content;max-width:min(88%,960px);border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;padding:4px 0}
+.agent-message--user .agent-message-body{max-width:min(78%,760px);padding:12px 18px;border:1px solid var(--color-border-default);border-radius:18px 6px 18px 18px;background:var(--color-surface-subtle);box-shadow:none}
+.agent-message--user .agent-message-name,.agent-message--user .agent-message-body>p{color:var(--color-text-primary)}
+.agent-avatar{background:transparent;box-shadow:none;border-radius:0}
+.agent-avatar img{width:36px;height:36px}
+.agent-message-heading{margin-bottom:7px}
+.agent-tabs-list{width:fit-content;border:1px solid var(--color-border-default);border-radius:10px;background:var(--color-surface-subtle);padding:3px;gap:3px}
+.agent-tab-trigger{border:0;border-radius:7px;padding:6px 12px;color:var(--color-text-secondary)}
+.agent-tab-trigger[data-state=active]{background:var(--color-surface-elevated);color:var(--color-text-primary);box-shadow:0 1px 4px rgb(0 0 0 / .08)}
+.agent-md-p,.agent-md-ul{font-size:15px;line-height:1.85}
+.agent-composer-shell{background:var(--color-surface-elevated);padding:14px clamp(16px,3%,48px) 18px;backdrop-filter:none}
+.agent-composer{background:var(--color-surface);border-color:var(--color-border-default);box-shadow:none}
+.agent-sources details{border:1px solid var(--color-border-default);border-radius:8px;padding:7px 10px;background:var(--color-surface-subtle);max-width:100%}
+.agent-sources summary{cursor:pointer;font-size:11px;color:var(--color-text-secondary)}
+.agent-sources p{font-size:12px;line-height:1.7;color:var(--color-text-secondary);margin:8px 0 0}
+.agent-tool-chip{background:var(--color-surface-subtle);border-color:var(--color-border-default)}
+.agent-tool-chip strong{color:var(--color-text-primary)}
+@media(max-width:900px){.agent-workspace{grid-template-columns:1fr}.agent-hero>div:first-child{flex-basis:100%}.agent-sidebar{display:none}}
+@media(max-width:560px){.agent-hero{gap:8px;padding-bottom:12px}.agent-hero h1{font-size:clamp(18px,5cqw,26px)}.agent-thread{padding:16px 12px}.agent-message--assistant .agent-message-body{max-width:calc(100% - 44px)}.agent-message--user .agent-message-body{max-width:88%}.agent-composer-shell{padding:10px 12px}.agent-md-p,.agent-md-ul{font-size:14px}.agent-tool-grid{grid-template-columns:minmax(0,1fr)}}

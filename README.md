@@ -223,10 +223,9 @@ proxy: {
 | ---------------- | ------------------------------------------------------------- |
 | 安装前端依赖     | `pnpm install`                                                |
 | 启动前端         | `pnpm run dev --filter=aixsilicon-web`                        |
-| 启动后端         | `cd services/aixsilicon-api && uvicorn app.main:app --reload` |
+| 启动后端         | `cd backend && uvicorn app.main:app --reload`                 |
 | 启动静态服务     | `cd static/tools && python -m http.server 8001`               |
-| 数据库迁移       | `cd services/aixsilicon-api && alembic upgrade head`          |
-| 初始化数据       | `cd services/aixsilicon-api && python scripts/init_db.py`     |
+| 数据库初始化     | 本地自动建表；生产容器执行 `alembic upgrade head`                 |
 | 构建前端         | `pnpm run build --filter=aixsilicon-web`                      |
 | 启动 Docker 全栈 | `docker compose up -d`                                        |
 
@@ -234,10 +233,10 @@ proxy: {
 
 ### 十、注意事项
 
-- 如果 PostgreSQL 未安装，可使用 SQLite（修改 `.env` 中的 `DATABASE_URL`）。
-- 如果 Redis 未安装，可在 `.env` 中注释掉 `REDIS_URL`（需在代码中处理降级，本项目已支持）。
+- 本地开发可使用 SQLite；生产 Compose 固定使用 PostgreSQL。
+- 本地 Redis 可降级；生产环境强制 Redis 可用，以保证令牌撤销语义。
 - 确保 `static/tools/` 目录存在，且包含至少一个示例工具（否则平台工具市场无数据）。
-- 首次启动后端后，务必执行数据库迁移和初始化数据。
+- 生产容器启动时会自动执行数据库迁移；首次登录后立即修改一次性管理员密码。
 
 ---
 

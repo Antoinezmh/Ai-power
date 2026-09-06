@@ -301,8 +301,8 @@ export function useUsers() {
 
 export function usePermissionsTree() {
     const [tree, setTree] = useState<Permission[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
+    const [, setLoading] = useState(true);
+    const [, setError] = useState<Error | null>(null);
     const { user } = useAuthStore();
 
     useEffect(() => {

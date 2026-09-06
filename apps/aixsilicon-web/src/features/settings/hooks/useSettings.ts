@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { settingsApi, Profile, ApiKey } from '../api/settingsApi';
+import { settingsApi } from '../api/settingsApi';
 
 export const SETTINGS_QUERY_KEY = 'settings';
 

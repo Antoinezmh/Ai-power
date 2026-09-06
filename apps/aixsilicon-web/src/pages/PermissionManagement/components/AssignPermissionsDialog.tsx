@@ -9,7 +9,7 @@ import {
   Checkbox,
 } from '@aixsilicon/ui';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Permission, Role } from '../types';
+import { Permission, Role } from '@/features/permissions/api/permissionApi';
 import { cn } from '@aixsilicon/ui';
 
 interface Props {

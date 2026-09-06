@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Card,
   Badge,
@@ -56,17 +55,16 @@ export function ToolCard({
   return (
     <Card
       variant="tool"
-      className="group flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border-default bg-surface-elevated transition-shadow hover:shadow-md"
     >
       {/* 顶部色条 */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-primary-400 to-primary-600" />
 
       {/* 内容区域 */}
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-5">
         {/* 头部：图标、标签、操作按钮 */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 text-3xl shadow-sm transition-transform duration-300 group-hover:scale-110 dark:from-primary-900/40 dark:to-primary-800/40">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-subtle text-2xl">
               {tool.icon || '🔧'}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -87,7 +85,7 @@ export function ToolCard({
             <PermissionGuard code="button:tools:manage">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`管理 ${tool.name}`}>
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -117,6 +115,8 @@ export function ToolCard({
               size="icon"
               className="h-8 w-8 text-text-muted hover:text-danger"
               onClick={handleFavorite}
+              aria-label={`${isFavorite ? '取消收藏' : '收藏'} ${tool.name}`}
+              aria-pressed={isFavorite}
             >
               <Heart
                 className={cn(
@@ -130,7 +130,7 @@ export function ToolCard({
 
         {/* 标题和元信息 */}
         <div className="mt-4">
-          <h3 className="text-lg font-semibold text-text-primary transition-colors group-hover:text-primary-600">
+          <h3 className="break-words text-base font-semibold text-text-primary transition-colors group-hover:text-primary-600">
             {tool.name}
           </h3>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text-secondary">
@@ -154,7 +154,7 @@ export function ToolCard({
         </div>
 
         {/* 描述 */}
-        <p className="mt-3 flex-1 text-sm text-text-secondary leading-relaxed line-clamp-3">
+        <p className="mt-3 min-h-[4.5rem] flex-1 break-words text-sm text-text-secondary leading-relaxed line-clamp-3">
           {tool.description}
         </p>
 

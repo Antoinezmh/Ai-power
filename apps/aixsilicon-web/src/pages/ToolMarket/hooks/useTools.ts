@@ -28,7 +28,7 @@ export function useTool(id: string) {
 export function useUseTool() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: useTool,
+        mutationFn: getTool,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [TOOLS_QUERY_KEY] });
         },

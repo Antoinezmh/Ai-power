@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { Brand } from '@/components/Brand';
 import { ArrowRight, Bot, Cpu, FlaskConical, Gauge, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import './landing.css';
+import './responsive.css';
 
 const capabilities = [
   { icon: Cpu, number: '01', title: '规格', en: 'SPEC', desc: '从客户需求到参数表，从 FoM 到热阻折算。', href: '/capabilities/spec' },
@@ -31,7 +33,7 @@ export default function Landing() {
   return (
     <div ref={pageRef} className="landing-page">
       <header className="landing-nav">
-        <a href="/" className="landing-brand"><span className="brand-mark">⌁</span><span>Ai Power</span></a>
+        <a href="/" className="landing-brand"><Brand /></a>
         <nav><a href="#capabilities">能力</a><a href="#pipeline">流程</a><a href="#about">关于</a></nav>
         <a href={workbenchHref} className="landing-login">{isAuthenticated ? '进入工作台' : '登录'} <ArrowRight size={15} /></a>
       </header>

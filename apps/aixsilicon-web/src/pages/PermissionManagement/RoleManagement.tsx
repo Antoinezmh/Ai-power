@@ -231,10 +231,6 @@ export default function RoleManagement() {
         onOpenChange={setIsUsersDialogOpen}
         role={selectedRole}
         users={users}
-        onUserCountChange={() => {
-          // 当用户角色关系变化时，刷新角色列表和用户列表
-          refetch();
-        }}
       />
     </div>
   );

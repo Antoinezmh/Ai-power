@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { permissionApi, Role, User, Permission } from '../api/permissionApi';
+import { permissionApi, Role, User } from '../api/permissionApi';
 
 export const PERMISSIONS_QUERY_KEY = 'permissions';
 export const ROLES_QUERY_KEY = 'roles';

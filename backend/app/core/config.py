@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator, model_validator
 from typing import List
 import os
 
@@ -17,9 +17,20 @@ def _resolve_env_file() -> list[str]:
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=_resolve_env_file(),
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
+    APP_ENV: str = "development"
     ENV: str = "development"
     DEBUG: bool = True
     SECRET_KEY: str = "dev-secret-key-use-env-in-production-$(openssl rand -hex 32)"
+    SEED_DEMO_DATA: bool = True
+    REQUIRE_REDIS: bool = False
+    BOOTSTRAP_ADMIN_USERNAME: str = ""
+    BOOTSTRAP_ADMIN_EMAIL: str = ""
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -75,10 +86,16 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    class Config:
-        env_file = _resolve_env_file()
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-
+    @model_validator(mode="after")
+    def validate_production_settings(self):
+        if self.APP_ENV.lower() != "production":
+            return self
+        if len(self.SECRET_KEY) < 32 or self.SECRET_KEY.startswith("dev-secret-key") or self.SECRET_KEY.startswith("replace-with"):
+            raise ValueError("Production SECRET_KEY must be a non-default value with at least 32 characters")
+        if self.SEED_DEMO_DATA:
+            raise ValueError("SEED_DEMO_DATA must be false in production")
+        if self.BOOTSTRAP_ADMIN_PASSWORD and len(self.BOOTSTRAP_ADMIN_PASSWORD) < 12:
+            raise ValueError("BOOTSTRAP_ADMIN_PASSWORD must contain at least 12 characters")
+        return self
 
 settings = Settings()

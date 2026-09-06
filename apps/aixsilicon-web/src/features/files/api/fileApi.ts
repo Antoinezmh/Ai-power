@@ -186,38 +186,34 @@ export async function uploadChunkedFile(data: {
     const total = file.size || 1;
     const chunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
     let uploaded = 0;
-    try {
-        for (let i = 0; i < chunks; i++) {
-            const start = i * CHUNK_SIZE;
-            const blob = file.slice(start, start + CHUNK_SIZE);
-            await uploadChunkPart(uploadId, i, blob, (partP) => {
-                const loadedBytes = uploaded + partP * blob.size;
-                data.onProgress?.(Math.min(99, (loadedBytes / total) * 100));
-            });
-            uploaded += blob.size;
-            data.onProgress?.(Math.min(99, (uploaded / total) * 100));
-        }
-
-        // 3. 合并完成
-        const compForm = new FormData();
-        compForm.append('upload_id', uploadId);
-        compForm.append('group_name', data.group_name);
-        compForm.append('func_type', data.func_type);
-        compForm.append('namespace', data.namespace);
-        compForm.append('filename', file.name);
-        if (data.tags && data.tags.length) compForm.append('tags', data.tags.join(','));
-        const compRes = await fetch(`${BASE_URL}/api/v1/files/upload/chunk/complete`, {
-            method: 'POST', headers: authHeaders, body: compForm,
+    for (let i = 0; i < chunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const blob = file.slice(start, start + CHUNK_SIZE);
+        await uploadChunkPart(uploadId, i, blob, (partP) => {
+            const loadedBytes = uploaded + partP * blob.size;
+            data.onProgress?.(Math.min(99, (loadedBytes / total) * 100));
         });
-        if (!compRes.ok) {
-            const err = await compRes.json().catch(() => ({}));
-            throw new Error(err.detail || `HTTP ${compRes.status}`);
-        }
-        data.onProgress?.(100);
-        return compRes.json();
-    } catch (e) {
-        throw e;
+        uploaded += blob.size;
+        data.onProgress?.(Math.min(99, (uploaded / total) * 100));
     }
+
+    // 3. 合并完成
+    const compForm = new FormData();
+    compForm.append('upload_id', uploadId);
+    compForm.append('group_name', data.group_name);
+    compForm.append('func_type', data.func_type);
+    compForm.append('namespace', data.namespace);
+    compForm.append('filename', file.name);
+    if (data.tags && data.tags.length) compForm.append('tags', data.tags.join(','));
+    const compRes = await fetch(`${BASE_URL}/api/v1/files/upload/chunk/complete`, {
+        method: 'POST', headers: authHeaders, body: compForm,
+    });
+    if (!compRes.ok) {
+        const err = await compRes.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${compRes.status}`);
+    }
+    data.onProgress?.(100);
+    return compRes.json();
 }
 
 export const fileApi = {

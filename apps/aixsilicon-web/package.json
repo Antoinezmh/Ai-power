@@ -1,6 +1,6 @@
 {
   "name": "aixsilicon-web",
-  "version": "0.0.1",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,7 +18,7 @@
     "lucide-react": "^0.399.0",
     "react": "^19.0.0-rc",
     "react-dom": "^19.0.0-rc",
-    "react-router-dom": "^6.24.0",
+    "react-router-dom": "^7.18.3",
     "recharts": "^2.12.7",
     "zustand": "^4.5.4"
   },

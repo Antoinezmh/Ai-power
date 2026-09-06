@@ -53,7 +53,7 @@ pnpm install
 ## 五、第三步：启动后端服务（终端 1）
 
 ```bash
-cd services/aixsilicon-api
+cd backend
 
 # 1. 创建并激活虚拟环境（若 venv 已存在可跳过）
 python -m venv venv
@@ -62,18 +62,10 @@ python -m venv venv
 # 2. 安装依赖
 pip install -r requirements.txt
 
-# 3. 配置环境变量（把 .env.example 复制为 .env）
-#    本地已配置好 SQLite：DATABASE_URL=sqlite+aiosqlite:///./test.db，无需 PostgreSQL
-copy .env.example .env          # 首次时执行；已存在可跳过
-
-# 4. 执行数据库迁移（建表）
-alembic upgrade head
-
-# 5. 初始化默认数据（创建 admin 管理员、角色、权限）
-python scripts/init_db.py
+# 3. 后端启动时会自动创建 SQLite 表并写入开发演示账号
 #    默认账号：admin / admin123
 
-# 6. 启动后端
+# 4. 启动后端
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -124,7 +116,7 @@ pnpm run dev --filter=aixsilicon-web
 
 | 终端 | 命令 |
 | ---- | ---- |
-| 终端 1（后端） | `cd services/aixsilicon-api && .\venv\Scripts\Activate.ps1; uvicorn app.main:app --reload --port 8000` |
+| 终端 1（后端） | `cd backend && .\venv\Scripts\Activate.ps1; uvicorn app.main:app --reload --port 8000` |
 | 终端 2（静态） | `cd static/tools && python -m http.server 8001` |
 | 终端 3（前端） | `pnpm run dev --filter=aixsilicon-web` |
 
@@ -147,10 +139,9 @@ docker compose up -d
 | ---- | ---- |
 | 安装前端依赖 | `pnpm install` |
 | 启动前端 | `pnpm run dev --filter=aixsilicon-web` |
-| 启动后端 | `cd services/aixsilicon-api && uvicorn app.main:app --reload` |
+| 启动后端 | `cd backend && uvicorn app.main:app --reload` |
 | 启动静态服务 | `cd static/tools && python -m http.server 8001` |
-| 数据库迁移 | `cd services/aixsilicon-api && alembic upgrade head` |
-| 初始化数据 | `cd services/aixsilicon-api && python scripts/init_db.py` |
+| 数据库初始化 | 后端首次启动时自动完成 |
 | 构建前端 | `pnpm run build --filter=aixsilicon-web` |
 | 启动 Docker 全栈 | `docker compose up -d` |
 
@@ -161,7 +152,7 @@ docker compose up -d
 1. **Python 版本**：推荐 3.11+。当前机器为 3.10.2，若 `pip install -r requirements.txt` 或 `alembic upgrade` 报错，建议安装 Python 3.11+，或使用已存在的 `venv`（注意其解释器版本）。
 2. **Redis 不是必需**：`app/main.py` 中 Redis 连不上仅打印 warning，不会阻止启动；本地无需 Redis。
 3. **数据库**：`.env` 已用 SQLite（`test.db`），无需 PostgreSQL。⚠️ 不要把 `.env.example` 里的默认 `postgresql+asyncpg://aix:aix123@db:5432/...` 直接拷过去，否则连不上。
-4. **首次必须做数据库迁移 + 初始化**：只启动不执行 `alembic upgrade head` 和 `init_db.py`，会没有表结构和默认管理员。
+4. **数据库初始化**：当前集成版在后端启动时自动创建 SQLite 表并初始化默认管理员，不需要执行不存在的 Alembic 或 `scripts/init_db.py`。
 5. **前端端口占用**：3000 被占会自动换端口，若换了请同时确认后端 `.env` 的 `CORS_ORIGINS` 是否包含该端口（默认含 3000/3001/8080）。
 6. **静态工具无数据**：`static/tools/` 需至少保留一个示例工具（如 `demo-monitor`），否则工具市场无内容。
 7. **SSO 默认关闭**：`.env` 中 `SSO_ENABLED=false`，本地直接用 admin/admin123 登录即可。

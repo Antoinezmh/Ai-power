@@ -18,7 +18,7 @@ export default defineConfig({
                 target: 'http://localhost:8000',   // 后端 API
                 changeOrigin: true,
             },
-            '/tools': {
+            '^/tools/.+': {
                 target: 'http://localhost:8001',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/tools/, ''),

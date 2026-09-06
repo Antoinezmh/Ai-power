@@ -46,8 +46,8 @@ export const authApi = {
     getMe: () =>
         api.get<UserInfo>('/api/v1/auth/me'),
 
-    logout: () =>
-        api.post('/api/v1/auth/logout'),
+    logout: (refreshToken?: string | null) =>
+        api.post('/api/v1/auth/logout', { refresh_token: refreshToken || null }),
 
     // ---- 统一登录（SSO）----
     getSsoConfig: () =>

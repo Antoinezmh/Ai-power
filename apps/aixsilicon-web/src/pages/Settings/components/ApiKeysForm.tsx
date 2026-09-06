@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@aixsilicon/ui';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@aixsilicon/ui';
 import { Plus, Trash2, Copy } from 'lucide-react';
 import { useApiKeys, useCreateApiKey, useDeleteApiKey } from '@/features/settings/hooks/useSettings';
 

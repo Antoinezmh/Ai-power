@@ -1,10 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Input, Button, Badge } from '@aixsilicon/ui';
+import { Input, Button } from '@aixsilicon/ui';
 import {
     Search,
-    ChevronDown,
-    ChevronRight,
     X,
     Code2,
     BarChart3,
@@ -20,7 +18,8 @@ import { PermissionGuard } from '@/components/PermissionGuard';
 import { useFavorites, useToggleFavorite } from '@/features/favorites/hooks/useFavorites';
 import { message } from '@aixsilicon/ui';
 import { Tool } from '@/features/tools/api/toolsApi';
-import { api } from '@/lib/api';   // 新增导入
+import { api } from '@/lib/api';
+import './market.css';
 
 // 后端 /api/v1/exec/run/{id} 的返回结构
 interface ExecRunResponse {
@@ -50,14 +49,13 @@ export default function ToolMarket() {
     const [activeSearch, setActiveSearch] = useState('');
     const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
     const [selectedFuncType, setSelectedFuncType] = useState<string | undefined>(undefined);
-    const [expandedGroups, setExpandedGroups] = useState<string[]>([GROUP_OPTIONS[0]]);
     const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [isManageOpen, setIsManageOpen] = useState(false);
     const [editingTool, setEditingTool] = useState<Tool | null>(null);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-    const { data: favorites = [], isLoading: favoritesLoading } = useFavorites();
+    const { data: favorites = [], isLoading: favoritesLoading, error: favoritesError, refetch: refetchFavorites } = useFavorites();
     const toggleFavorite = useToggleFavorite();
     const deleteTool = useDeleteTool();
 
@@ -90,19 +88,29 @@ export default function ToolMarket() {
     }, [searchParams, setSearchParams]);
 
     const tools = useMemo(() => {
-        if (showFavoritesOnly) {
-            const favoriteIds = new Set(favorites.map(f => f.id));
-            return allTools.filter(t => favoriteIds.has(t.id));
-        }
-        return allTools;
-    }, [allTools, favorites, showFavoritesOnly]);
+        if (!showFavoritesOnly) return allTools;
+        const keyword = activeSearch.trim().toLocaleLowerCase();
+        return favorites.filter(tool =>
+            (!selectedGroup || tool.group_name === selectedGroup) &&
+            (!selectedFuncType || tool.func_type === selectedFuncType) &&
+            (!keyword || [tool.name, tool.description, ...(tool.tags || [])].join(' ').toLocaleLowerCase().includes(keyword))
+        );
+    }, [allTools, favorites, showFavoritesOnly, selectedGroup, selectedFuncType, activeSearch]);
+    const listLoading = showFavoritesOnly ? favoritesLoading : isLoading;
+    const listError = showFavoritesOnly ? favoritesError : error;
+    const resetFilters = () => {
+        setSelectedGroup(undefined);
+        setSelectedFuncType(undefined);
+        setSearchKeyword('');
+        setActiveSearch('');
+    };
 
     const handleSearch = () => {
-        setActiveSearch(searchKeyword);
+        setActiveSearch(searchKeyword.trim());
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
             e.preventDefault();
             handleSearch();
         }
@@ -111,12 +119,6 @@ export default function ToolMarket() {
     const clearSearch = () => {
         setSearchKeyword('');
         setActiveSearch('');
-    };
-
-    const toggleGroup = (name: string) => {
-        setExpandedGroups(prev =>
-            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
-        );
     };
 
     const handleSelectAll = () => {
@@ -129,11 +131,6 @@ export default function ToolMarket() {
         setSelectedFuncType(undefined);
     };
 
-    const handleSelectFuncType = (group: string, funcType: string) => {
-        setSelectedGroup(group);
-        setSelectedFuncType(funcType);
-    };
-
     const handleViewDetail = (tool: Tool) => {
         setSelectedTool(tool);
         setDrawerOpen(true);
@@ -143,10 +140,11 @@ export default function ToolMarket() {
     // 修改点：增加对 executable 和 streamlit 类型的处理
     // ============================================================
     const handleUseTool = async (id: string) => {
-        const tool = allTools.find(t => t.id === id);
-        if (!tool) return;
-
         try {
+            // A recommendation can open a tool that is not in the current
+            // paginated grid, so resolve it before dispatching its launch.
+            const tool = allTools.find(t => t.id === id)
+                ?? (selectedTool?.id === id ? selectedTool : await api.get<Tool>(`/api/v1/tools/${id}`));
             // 先记录使用（计数）
             await useToolMutation.mutateAsync(id);
 
@@ -211,144 +209,70 @@ export default function ToolMarket() {
         setShowFavoritesOnly(!showFavoritesOnly);
     };
 
-    // 渲染八组 → 三型 两级侧边栏
-    const renderGroupSidebar = () => {
-        return GROUP_OPTIONS.map((group) => {
-            const isExpanded = expandedGroups.includes(group);
-            const isGroupActive = selectedGroup === group && !selectedFuncType;
-            const Icon = categoryIconMap[group] || Code2;
-            const groupCount = allTools.filter(t => t.group_name === group).length;
-
-            return (
-                <div key={group}>
-                    <div
-                        className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors ${isGroupActive ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/30' : 'hover:bg-surface-hover'
-                            }`}
-                        onClick={() => handleSelectGroup(group)}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4 text-text-secondary" />
-                            <span className="text-sm font-medium">{group}</span>
-                            <Badge variant="secondary" className="text-xs">{groupCount}</Badge>
-                        </div>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); toggleGroup(group); }}
-                            className="p-1 hover:bg-surface-active rounded"
-                        >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </button>
-                    </div>
-                    {isExpanded && (
-                        <div className="ml-4 mt-1 space-y-1">
-                            <div
-                                className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors ${selectedGroup === group && !selectedFuncType ? 'font-semibold text-primary-600' : 'hover:bg-surface-hover'}`}
-                                onClick={() => handleSelectGroup(group)}
-                            >
-                                <span className="text-sm">{group}（全部功能型）</span>
-                            </div>
-                            {FUNC_TYPE_OPTIONS.map((ft) => {
-                                const ftActive = selectedGroup === group && selectedFuncType === ft;
-                                const ftCount = allTools.filter(t => t.group_name === group && t.func_type === ft).length;
-                                return (
-                                    <div
-                                        key={ft}
-                                        className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors ${ftActive ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/30' : 'hover:bg-surface-hover'}`}
-                                        style={{ paddingLeft: '12px' }}
-                                        onClick={() => handleSelectFuncType(group, ft)}
-                                    >
-                                        <span className="text-sm">{ft}</span>
-                                        <Badge variant="secondary" className="text-xs">{ftCount}</Badge>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            );
-        });
-    };
-
     return (
-        <div className="flex h-full gap-6 p-6">
-            {/* 左侧分类 */}
-            <div className="w-64 shrink-0">
-                <div className="sticky top-6 rounded-xl border border-border-default bg-surface-elevated p-4 shadow-sm">
-                    <div className="mb-4 font-semibold text-text-primary">分类</div>
-                    <div className="space-y-1">
-                        <div
-                            className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors ${selectedGroup === undefined && selectedFuncType === undefined ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/30' : 'hover:bg-surface-hover'
-                                }`}
-                            onClick={handleSelectAll}
-                        >
-                            <span className="text-sm font-medium">全部</span>
-                            <Badge variant="secondary" className="text-xs">
-                                {allTools.length}
-                            </Badge>
-                        </div>
-
-                        {renderGroupSidebar()}
-                    </div>
+        <div className="tool-market">
+            <header className="market-heading">
+                <div>
+                    <p className="market-eyebrow">ENGINEERING TOOLKIT</p>
+                    <h1>工具市场</h1>
+                    <p className="market-subtitle">找到适合当前工程问题的工具，从数据处理到报告产出。</p>
                 </div>
-            </div>
+                <PermissionGuard code="button:tools:manage">
+                    <Button variant="secondary" onClick={() => { setEditingTool(null); setIsManageOpen(true); }}>
+                        <Settings className="mr-2 h-4 w-4" /> 注册工具
+                    </Button>
+                </PermissionGuard>
+            </header>
 
-            {/* 主内容 */}
-            <div className="flex-1 min-w-0">
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-text-primary">工具市场</h1>
-                        <span className="text-sm text-text-secondary">
-                            共 {tools.length} 个工具
-                            {activeSearch && `（搜索："${activeSearch}"）`}
-                            {showFavoritesOnly && '（仅显示收藏）'}
-                        </span>
-                        <Button
-                            variant={showFavoritesOnly ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleShowFavorites}
-                            className="flex items-center gap-1"
-                        >
-                            <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-white' : ''}`} />
-                            {showFavoritesOnly ? '显示全部' : '我的收藏'}
-                        </Button>
+            <div className="market-layout">
+                <aside className="market-sidebar" aria-label="研发分组">
+                    <p className="market-eyebrow">研发分组</p>
+                    <div className="market-groups">
+                        <button type="button" aria-pressed={!selectedGroup} className={!selectedGroup ? 'is-active' : ''} onClick={handleSelectAll}>
+                            <Code2 size={16} /> 全部分组
+                        </button>
+                        {GROUP_OPTIONS.map(group => {
+                            const Icon = categoryIconMap[group];
+                            return <button type="button" key={group} aria-pressed={selectedGroup === group} className={selectedGroup === group ? 'is-active' : ''} onClick={() => handleSelectGroup(group)}>
+                                <Icon size={16} />{group}
+                            </button>;
+                        })}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="relative w-80">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                            <Input
-                                placeholder="搜索工具名称、描述或标签..."
-                                className="pl-9 pr-10"
-                                value={searchKeyword}
-                                onChange={(e) => setSearchKeyword(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                            {searchKeyword && (
-                                <button
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
-                                    onClick={clearSearch}
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            )}
+                    <p className="market-sidebar-note">先选研发分组，再按功能缩小范围。收藏常用工具，下次快速进入。</p>
+                </aside>
+
+                <div className="market-content">
+                    <div className="market-toolbar">
+                        <div className="market-tabs" aria-label="工具范围">
+                            <button type="button" aria-pressed={!showFavoritesOnly} className={!showFavoritesOnly ? 'is-active' : ''} onClick={() => setShowFavoritesOnly(false)}>全部工具</button>
+                            <button type="button" aria-pressed={showFavoritesOnly} className={showFavoritesOnly ? 'is-active' : ''} onClick={() => setShowFavoritesOnly(true)}><Heart size={15} /> 我的收藏</button>
                         </div>
-                        <Button variant="primary" onClick={handleSearch}>
-                            搜索
-                        </Button>
-                        <PermissionGuard code="button:tools:manage">
-                            <Button variant="secondary" onClick={() => { setEditingTool(null); setIsManageOpen(true); }}>
-                                <Settings className="mr-2 h-4 w-4" /> 管理工具
-                            </Button>
-                        </PermissionGuard>
+                        <div className="market-search">
+                            <div className="relative min-w-0 flex-1">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                                <Input aria-label="搜索工具" placeholder="搜索名称、描述或标签" className="pl-9 pr-9" value={searchKeyword} onChange={e => setSearchKeyword(e.target.value)} onKeyDown={handleKeyDown} />
+                                {searchKeyword && <button type="button" aria-label="清空搜索" className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted" onClick={clearSearch}><X size={15} /></button>}
+                            </div>
+                            <Button onClick={handleSearch}>搜索</Button>
+                        </div>
                     </div>
-                </div>
+                    <div className="market-filters" aria-label="功能筛选">
+                        <span>功能</span>
+                        {[undefined, ...FUNC_TYPE_OPTIONS].map(ft => <button type="button" key={ft || 'all'} aria-pressed={selectedFuncType === ft} className={selectedFuncType === ft ? 'is-active' : ''} onClick={() => setSelectedFuncType(ft)}>{ft || '全部功能'}</button>)}
+                    </div>
+                    <div className="market-result-summary" aria-live="polite">
+                        <span>{selectedGroup || '全部分组'}{selectedFuncType ? ' / ' + selectedFuncType : ''} · {listLoading ? '加载中…' : '当前显示 ' + tools.length + ' 个工具'}{activeSearch ? ' · “' + activeSearch + '”' : ''}</span>
+                        {(selectedGroup || selectedFuncType || activeSearch) && <button type="button" onClick={resetFilters}>重置筛选 <X size={13} /></button>}
+                    </div>
 
-                {error ? (
+                {listError ? (
                     <div className="flex h-96 flex-col items-center justify-center">
-                        <p className="text-danger">加载失败：{(error as Error).message}</p>
-                        <Button variant="secondary" className="mt-4" onClick={() => refetch()}>
+                        <p className="text-danger">加载失败：{(listError as Error).message}</p>
+                        <Button variant="secondary" className="mt-4" onClick={() => showFavoritesOnly ? refetchFavorites() : refetch()}>
                             重试
                         </Button>
                     </div>
-                ) : tools.length === 0 && !isLoading ? (
+                ) : tools.length === 0 && !listLoading ? (
                     <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-border-default bg-surface-elevated">
                         <Search className="h-16 w-16 text-text-muted" />
                         <p className="mt-4 text-lg font-medium text-text-primary">
@@ -363,14 +287,14 @@ export default function ToolMarket() {
                             </Button>
                         )}
                         {!showFavoritesOnly && (
-                            <Button variant="secondary" className="mt-4" onClick={clearSearch}>
+                            <Button variant="secondary" className="mt-4" onClick={resetFilters}>
                                 清除筛选
                             </Button>
                         )}
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="market-grid">
                             {tools.map((tool) => (
                                 <ToolCard
                                     key={tool.id}
@@ -385,7 +309,7 @@ export default function ToolMarket() {
                             ))}
                         </div>
 
-                        {isLoading && (
+                        {listLoading && (
                             <div className="mt-6 flex justify-center text-text-muted">加载中...</div>
                         )}
 
@@ -400,7 +324,7 @@ export default function ToolMarket() {
                                 </Button>
                             </div>
                         )}
-                        {!hasNextPage && tools.length > 0 && (
+                        {(showFavoritesOnly || !hasNextPage) && tools.length > 0 && (
                             <div className="mt-6 flex justify-center py-4 text-sm text-text-muted">
                                 已加载全部工具
                             </div>
@@ -409,10 +333,13 @@ export default function ToolMarket() {
                 )}
             </div>
 
+            </div>
+
             <ToolDetailDrawer
                 tool={selectedTool}
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
+                onUseTool={handleUseTool}
             />
 
             <ToolManageDialog

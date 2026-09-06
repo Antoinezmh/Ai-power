@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Brand } from '@/components/Brand';
 import { ArrowRight, Check, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
@@ -78,7 +79,7 @@ export default function Login() {
         <div className="login-shell">
             <section className="login-main">
                 <header className="login-header">
-                    <a href="/" className="login-brand"><span className="login-brand-mark">AP</span><span>AI POWER</span></a>
+                    <a href="/" className="login-brand"><Brand /></a>
                     <a href="/" className="login-home-link">返回首页 <ArrowRight size={14} /></a>
                 </header>
 
@@ -96,10 +97,10 @@ export default function Login() {
 
                     {ssoConfig?.enabled && <div className="login-sso"><span>或</span><button type="button" onClick={() => { if (ssoConfig.authorize_url) window.location.href = ssoConfig.authorize_url; }} disabled={loading}>使用统一身份登录</button></div>}
 
-                    <details className="login-dev-accounts">
+                    {import.meta.env.DEV && <details className="login-dev-accounts">
                         <summary>开发测试账号 <span>点击账号可快速填充</span></summary>
                         <div className="login-account-list">{devAccounts.map((account) => <button type="button" key={account.username} onClick={() => { setUsername(account.username); setPassword(account.password); setError(''); }}><span>{account.role}</span><code>{account.username}</code><small>{account.password}</small><Check size={13} /></button>)}</div>
-                    </details>
+                    </details>}
                 </main>
 
                 <footer className="login-footer"><span><i />服务正常</span><span>© 2026 功率器件研发部 · 内部使用</span></footer>

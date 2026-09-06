@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, message } from '@aixsilicon/ui';
 import { FileText } from 'lucide-react';
-import type { FileAsset } from './api/fileApi';
+import type { FileAsset } from '../api/fileApi';
 
 export interface FilePickerModalOptions {
     group?: string;

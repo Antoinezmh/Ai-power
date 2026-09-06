@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.agent import AgentConfigOut, AgentConfigUpdate, ChatRequest, ChatResponse
 from app.services.agent_service import AgentService
+from app.services.redis_service import RedisService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -16,8 +17,19 @@ async def chat(
     _current_user: User = Depends(get_current_user),
 ) -> ChatResponse:
     """Every authenticated department account may use the shared AI assistant."""
-    reply, mode, suggestions = await AgentService.reply(db, req.message)
-    return ChatResponse(reply=reply, mode=mode, suggestions=suggestions)
+    await RedisService.enforce_rate_limit("chat", _current_user.id, 30, 60)
+    reply, mode, suggestions, sources = await AgentService.reply(db, req.message)
+    return ChatResponse(reply=reply, mode=mode, suggestions=suggestions, sources=sources)
+
+
+@router.get("/status")
+async def agent_status(
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+):
+    config = await AgentService.get_config(db)
+    connected = bool(config and config.enabled and config.encrypted_api_key)
+    return {"connected": connected, "mode": "agent" if connected else "catalog"}
 
 
 def _require_platform_admin(user: User) -> None:

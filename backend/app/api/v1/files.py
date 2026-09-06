@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,7 @@ from app.core.file_center import GROUPS, FUNC_TYPES
 from app.models.file_asset import FileAsset
 from app.models.file_permission import FilePermission
 from app.models.user import User
+from app.services.redis_service import RedisService
 
 router = APIRouter(prefix="/files", tags=["文件中心"])
 
@@ -153,6 +154,7 @@ async def upload(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    await RedisService.enforce_rate_limit("upload", user.id, 20, 60)
     await _require_space(db, user, group_name, func_type, namespace, "write")
     tag_list = [t.strip() for t in tags.split(",")] if tags else None
     asset = await FileService.upload(
@@ -219,8 +221,8 @@ async def list_files(
     namespace: Optional[str] = None,
     keyword: Optional[str] = None,
     archived: Optional[bool] = None,
-    page: int = 1,
-    page_size: int = 50,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -357,6 +359,8 @@ async def list_tool_grants(
     current_user: User = Depends(get_current_user),
 ):
     """列出当前用户（或指定用户）通过工具授权可访问的工具/文件空间。"""
+    if user_id and user_id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Only administrators can inspect another user's grants")
     target = user_id or current_user.id
     rows = await ToolGrantService.list_by_user(db, user_id=target)
     return rows

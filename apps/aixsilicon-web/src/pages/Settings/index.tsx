@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@aixsilicon/ui';
-import { User, Shield, Bell, Palette, Key } from 'lucide-react';
+import { User, Bell, Palette } from 'lucide-react';
 import ProfileForm from './components/ProfileForm';
 import SecurityForm from './components/SecurityForm';
 import NotificationForm from './components/NotificationForm';
@@ -22,9 +22,6 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabKey>('profile');
   const settings = useSettings();
 
-  // 调试：打印当前激活的 tab
-  console.log('当前激活的 tab:', activeTab);
-
   return (
     <div className="flex h-full gap-6">
       {/* 左侧导航 */}
@@ -38,7 +35,6 @@ export default function Settings() {
                 : 'text-text-secondary hover:bg-surface-hover'
                 } relative`}
               onClick={() => {
-                console.log('点击了 tab:', tab.key);
                 setActiveTab(tab.key);
               }}
             >
@@ -52,11 +48,11 @@ export default function Settings() {
       {/* 右侧内容 */}
       <div className="flex-1 min-w-0">
         <Card className="p-6">
-          {activeTab === 'profile' && <ProfileForm settings={settings} />}
-          {activeTab === 'security' && <SecurityForm settings={settings} />}
+          {activeTab === 'profile' && <ProfileForm />}
+          {activeTab === 'security' && <SecurityForm />}
           {activeTab === 'notification' && <NotificationForm settings={settings} />}
           {activeTab === 'appearance' && <AppearanceForm settings={settings} />}
-          {activeTab === 'api' && <ApiKeysForm settings={settings} />}
+          {activeTab === 'api' && <ApiKeysForm />}
         </Card>
       </div>
     </div>

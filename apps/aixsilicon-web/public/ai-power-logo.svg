@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <title>AI Power</title>
+  <desc>以三引脚功率器件封装为轮廓，内部四向星形象征 AI，作为 AI 与 Power 之间的智能连接符。</desc>
+  <rect width="96" height="96" rx="24" fill="#14283F"/>
+  <path d="M35 63v15m13-15v15m13-15v15" stroke="#39D9CF" stroke-width="6" stroke-linecap="round"/>
+  <path d="M37 27v-8h22v8" stroke="#39D9CF" stroke-width="5" stroke-linejoin="round"/>
+  <rect x="25" y="27" width="46" height="38" rx="7" fill="#39D9CF"/>
+  <path d="M48 32c2.5 9 5 11.5 14 14-9 2.5-11.5 5-14 14-2.5-9-5-11.5-14-14 9-2.5 11.5-5 14-14Z" fill="#14283F"/>
+</svg>
