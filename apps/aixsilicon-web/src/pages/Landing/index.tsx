@@ -45,7 +45,7 @@ export default function Landing() {
           <h2>为功率器件而生</h2>
           <p>一个工具台，一个 AI 助手，一套部门流程。<br /><span>MOSFET · IGBT · SiC · GaN — 从规格到量产</span></p>
           <div className="landing-actions"><a className="button primary" href={workbenchHref}>进入工作台 <ArrowRight size={16} /></a><a className="button secondary" href="#capabilities">了解能力</a></div>
-          <div className="metrics"><div><strong>28</strong><span>个工具</span></div><div><strong>4</strong><span>大模块</span></div><div><strong>7</strong><span>个 Gate</span></div><div><strong>12+</strong><span>工程师共建</span></div></div>
+          <div className="metrics"><div><strong>AI</strong><span>智能助手</span></div><div><strong>4</strong><span>大模块</span></div><div><strong>7</strong><span>研发 Gate</span></div><div><strong>×</strong><span>功率器件</span></div></div>
         </section>
 
         <section id="capabilities" className="landing-section landing-reveal">
@@ -66,7 +66,7 @@ export default function Landing() {
         <section className="landing-cta landing-reveal"><div className="eyebrow">START</div><h3>准备好了吗</h3><p>{isAuthenticated ? '进入工作台，继续你的研发任务。' : '登录后即可使用工具台、嵌入式小程序与 AI 助手。'}</p><a className="button primary" href={workbenchHref}>{isAuthenticated ? '进入工作台' : '使用部门账号登录'} <ArrowRight size={16} /></a></section>
       </main>
 
-      <footer className="landing-footer"><span>© 2026 功率器件研发部 · 内部资料 · 仅限部门同事访问</span><span>v0.3 · 反馈：aipower@company.local</span></footer>
+      <footer className="landing-footer"><span>© 2026 Ai Power · 功率器件研发 AI 平台 · 内部使用</span><span>v1.1 · AI × Power</span></footer>
     </div>
   );
 }

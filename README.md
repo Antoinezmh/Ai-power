@@ -1,6 +1,6 @@
-# AI-Platform
+# Ai Power
 
-## 📘 AI 开发工具集成平台 — 本地开发运行指南
+## 📘 功率器件研发 AI 平台 — 本地开发运行指南
 
 本文档详细说明从 Git 拉取代码到本地成功运行前后端服务的完整步骤，并解答关于静态工具集成、多项目支持等常见问题。
 
@@ -21,8 +21,8 @@
 ### 二、克隆代码
 
 ```bash
-git clone https://your-repo-url/aixsilicon-platform.git
-cd aixsilicon-platform
+git clone https://github.com/Antoinezmh/Ai-power.git
+cd Ai-power
 ```
 
 ---
@@ -39,10 +39,10 @@ pnpm install
 
 #### 2. 配置前端环境变量（可选）
 
-复制 `.env.example` 为 `.env.development`（如需修改 API 代理目标）：
+前端本地开发通常无需额外环境文件；如需修改 API 代理目标，可在 `apps/aixsilicon-web/.env.development` 中配置：
 
 ```bash
-cp .env.example .env.development
+# 如需自定义前端代理，请创建 apps/aixsilicon-web/.env.development
 ```
 
 默认无需修改，Vite 代理已将 `/api` 转发到 `http://localhost:8000`，`/tools` 转发到 `http://localhost:8001`。
@@ -62,7 +62,7 @@ pnpm run dev --filter=aixsilicon-web
 #### 1. 创建 Python 虚拟环境（推荐）
 
 ```bash
-cd services/aixsilicon-api
+cd backend
 python -m venv venv
 # Windows
 venv\Scripts\activate
@@ -86,10 +86,10 @@ pip install -e .
 
 #### 3. 配置环境变量
 
-复制 `.env.example` 为 `.env`，根据本地环境修改数据库连接等：
+生产部署时，将根目录的 `.env.production.example` 复制为服务器上的 `.env`，并替换所有占位符：
 
 ```bash
-cp .env.example .env
+cp ../.env.production.example .env
 ```
 
 **推荐本地使用 SQLite（无需安装 PostgreSQL）**：
@@ -172,7 +172,7 @@ proxy: {
 
 | 终端       | 命令                                                          | 说明         |
 | ---------- | ------------------------------------------------------------- | ------------ |
-| **终端 1** | `cd services/aixsilicon-api && uvicorn app.main:app --reload` | 后端服务     |
+| **终端 1** | `cd backend && uvicorn app.main:app --reload` | 后端服务     |
 | **终端 2** | `cd static/tools && python -m http.server 8001`               | 静态文件服务 |
 | **终端 3** | `pnpm run dev --filter=aixsilicon-web`                        | 前端服务     |
 
@@ -253,7 +253,7 @@ proxy: {
 | 配置项                           | 内容                                                                     |
 | -------------------------------- | ------------------------------------------------------------------------ |
 | **前端代码位置**                 | `apps/aixsilicon-web/src/pages/CodeReview/`                              |
-| **后端代码位置**                 | `services/aixsilicon-api/app/api/v1/code_review.py`                      |
+| **后端代码位置**                 | `backend/app/api/v1/<module>.py`                                         |
 | **是否需要 Nginx 额外配置**      | ❌ 不需要（前端路由由 React Router 处理，后端 API 已有 `/api/v1/` 代理） |
 | **是否需要 Docker Compose 修改** | ❌ 不需要                                                                |
 | **平台工具注册**                 | **资源类型**：`内部后端API`<br>**资源路径**：`/code-review`              |

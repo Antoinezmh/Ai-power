@@ -1,6 +1,6 @@
-# AI-Silicon Platform 本地启动运行指南
+# Ai Power 本地启动运行指南
 
-> 适用项目：`ai-platform`（aiXsilicon Platform，AI 开发工具集成平台）
+> 适用项目：`Ai-power`（Ai Power，功率器件研发 AI 平台）
 > 技术栈：前端 React+Vite（Turbo/Pnpm monorepo） + 后端 FastAPI（Python）
 
 ---
@@ -34,8 +34,8 @@
 ## 三、第一步：拉取代码（若已完成可跳过）
 
 ```bash
-git clone <仓库地址> aixsilicon-platform
-cd aixsilicon-platform
+git clone https://github.com/Antoinezmh/Ai-power.git
+cd Ai-power
 ```
 
 ---
@@ -151,7 +151,7 @@ docker compose up -d
 
 1. **Python 版本**：推荐 3.11+。当前机器为 3.10.2，若 `pip install -r requirements.txt` 或 `alembic upgrade` 报错，建议安装 Python 3.11+，或使用已存在的 `venv`（注意其解释器版本）。
 2. **Redis 不是必需**：`app/main.py` 中 Redis 连不上仅打印 warning，不会阻止启动；本地无需 Redis。
-3. **数据库**：`.env` 已用 SQLite（`test.db`），无需 PostgreSQL。⚠️ 不要把 `.env.example` 里的默认 `postgresql+asyncpg://aix:aix123@db:5432/...` 直接拷过去，否则连不上。
+3. **数据库**：本地默认使用 `backend/test.db`（SQLite），无需 PostgreSQL；不要把生产配置中的数据库占位符直接用于本地启动。
 4. **数据库初始化**：当前集成版在后端启动时自动创建 SQLite 表并初始化默认管理员，不需要执行不存在的 Alembic 或 `scripts/init_db.py`。
 5. **前端端口占用**：3000 被占会自动换端口，若换了请同时确认后端 `.env` 的 `CORS_ORIGINS` 是否包含该端口（默认含 3000/3001/8080）。
 6. **静态工具无数据**：`static/tools/` 需至少保留一个示例工具（如 `demo-monitor`），否则工具市场无内容。
