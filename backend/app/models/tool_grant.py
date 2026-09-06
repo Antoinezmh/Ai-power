@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
@@ -9,6 +9,14 @@ class ToolGrant(Base):
     这是「用户拥有哪些工具使用权限 -> 对应文件中心文件权限」的联动枢纽。
     优先匹配 user_id，其次匹配 role_id。"""
     __tablename__ = "tool_grants"
+    __table_args__ = (
+        CheckConstraint(
+            "(user_id IS NOT NULL AND role_id IS NULL) OR (user_id IS NULL AND role_id IS NOT NULL)",
+            name="ck_tool_grant_single_target",
+        ),
+        UniqueConstraint("tool_id", "user_id", name="uq_tool_grant_tool_user"),
+        UniqueConstraint("tool_id", "role_id", name="uq_tool_grant_tool_role"),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tool_id = Column(String(36), ForeignKey("tools.id", ondelete="CASCADE"), nullable=False, index=True)

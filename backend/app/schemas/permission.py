@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime   # 新增导入
 from enum import Enum
@@ -34,7 +34,7 @@ class PermissionUpdate(BaseModel):
 class PermissionResponse(PermissionBase):
     id: str
     created_at: datetime
-    children: List['PermissionResponse'] = []
+    children: List['PermissionResponse'] = Field(default_factory=list)
 
 # 支持递归模型引用
 PermissionResponse.model_rebuild()

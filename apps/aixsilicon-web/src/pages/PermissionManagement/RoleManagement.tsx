@@ -21,17 +21,20 @@ import {
   useCreateRole,
   useUpdateRole,
   usePermissionsTree,
+  useAllUsers,
 } from '@/features/permissions/hooks/usePermissions';
 import RoleFormDialog from './components/RoleFormDialog';
 import AssignPermissionsDialog from './components/AssignPermissionsDialog';
 import RoleUsersDialog from './components/RoleUsersDialog';
-import { useUsers } from '@/features/permissions/hooks/usePermissions';
 import { Role } from '@/features/permissions/api/permissionApi';
 // 导入 useAssignPermissions
 import { useAssignPermissions } from '@/features/permissions/hooks/usePermissions';
+import { usePermission } from '@/context/PermissionContext';
 export default function RoleManagement() {
+  const { hasPermission } = usePermission();
+  const canManage = hasPermission('button:permissions:manageRoles');
   const { data: roles = [], isLoading, refetch } = useRoles();
-  const { data: users = [] } = useUsers();
+  const { data: users = [] } = useAllUsers();
   const { data: permissionsTree = [] } = usePermissionsTree();
   const createRole = useCreateRole();
   const updateRole = useUpdateRole();
@@ -107,9 +110,9 @@ export default function RoleManagement() {
               />
               <Badge variant="secondary">{roles.length} 个角色</Badge>
             </div>
-            <Button onClick={() => { setEditingRole(null); setIsFormOpen(true); }}>
+            {canManage && <Button onClick={() => { setEditingRole(null); setIsFormOpen(true); }}>
               <Plus className="mr-2 h-4 w-4" /> 新建角色
-            </Button>
+            </Button>}
           </div>
 
           <Table>
@@ -133,8 +136,7 @@ export default function RoleManagement() {
                 </TableRow>
               ) : (
                 filteredRoles.map((role) => {
-                  // ✅ 核心修复：直接使用 users 实时计算关联用户数，忽略后端 user_count
-                  const userCount = users.filter(u => u.roles.includes(role.id)).length;
+                  const userCount = role.user_count ?? users.filter(u => u.roles.includes(role.id)).length;
 
                   return (
                     <TableRow key={role.id}>
@@ -167,24 +169,24 @@ export default function RoleManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
+                          {canManage && <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleAssign(role)}
                             className="h-8 px-2"
                           >
                             分配权限
-                          </Button>
-                          <Button
+                          </Button>}
+                          {canManage && <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => handleEdit(role)}
                           >
                             <Pencil className="h-4 w-4" />
-                          </Button>
-                          <PopConfirm
-                            title="删除工具"
+                          </Button>}
+                          {canManage && <PopConfirm
+                            title="删除角色"
                             description={`确定要删除此角色吗？此操作不可恢复！`}
                             confirmText="删除"
                             onConfirm={() => handleDelete?.(role.id)}
@@ -197,7 +199,7 @@ export default function RoleManagement() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </PopConfirm>
+                          </PopConfirm>}
 
                         </div>
                       </TableCell>

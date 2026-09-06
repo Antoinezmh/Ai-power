@@ -34,15 +34,10 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
     const [tags, setTags] = useState('');
     const [owner, setOwner] = useState('');
     const [icon, setIcon] = useState('🔧');
-    const [type, setType] = useState<'internal' | 'static' | 'external' | 'executable' | 'streamlit'>('internal');
+    const [type, setType] = useState<'internal' | 'static' | 'external' | 'streamlit'>('internal');
     const [source, setSource] = useState('');
     const [entry, setEntry] = useState('index.html');
-
-    // === 新增：可执行程序专用字段 ===
-    const [executablePath, setExecutablePath] = useState('');
-    const [executableArgs, setExecutableArgs] = useState('');
-    const [executableWorkingDir, setExecutableWorkingDir] = useState('');
-    const [streamlitPort, setStreamlitPort] = useState<number | undefined>(undefined);
+    const [isPublic, setIsPublic] = useState(false);
 
     // === 文件中心分类字段 ===
     const [groupName, setGroupName] = useState('');
@@ -67,14 +62,10 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             setTags((editingTool.tags || []).join(', '));
             setOwner(editingTool.owner || '');
             setIcon(editingTool.icon || '🔧');
-            setType(editingTool.type || 'internal');
+            setType(editingTool.type === 'executable' ? 'internal' : (editingTool.type || 'internal'));
             setSource(editingTool.source || '');
             setEntry(editingTool.entry || 'index.html');
-            // 可执行程序字段
-            setExecutablePath(editingTool.executable_path || '');
-            setExecutableArgs(editingTool.executable_args ? JSON.stringify(editingTool.executable_args) : '');
-            setExecutableWorkingDir(editingTool.executable_working_dir || '');
-            setStreamlitPort(editingTool.streamlit_port);
+            setIsPublic(editingTool.is_public ?? false);
             // 文件中心分类字段
             setGroupName(editingTool.group_name || '');
             setFuncType(editingTool.func_type || '');
@@ -88,10 +79,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             setType('internal');
             setSource('');
             setEntry('index.html');
-            setExecutablePath('');
-            setExecutableArgs('');
-            setExecutableWorkingDir('');
-            setStreamlitPort(undefined);
+            setIsPublic(false);
             // 文件中心分类字段
             setGroupName('');
             setFuncType('');
@@ -104,15 +92,13 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
     const getSourcePlaceholder = () => {
         switch (type) {
             case 'internal':
-                return '/api/v1/custom/xxx  (例如：/api/v1/chat)';
+                return '/capabilities/epitaxy';
             case 'static':
                 return '/tools/xxx/  (例如：/tools/editor/)';
             case 'external':
                 return 'https://example.com/tool';
-            case 'executable':
-                return 'C:\\tools\\myapp.exe';
             case 'streamlit':
-                return 'Streamlit 应用路径（可选）';
+                return '/my-streamlit/ 或 https://tools.example.com/app';
             default:
                 return '请输入资源路径';
         }
@@ -121,15 +107,13 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
     const getSourceHint = () => {
         switch (type) {
             case 'internal':
-                return '📌 后端 API 的相对路径（不含域名），前端会通过代理访问';
+                return '📌 主站已有的前端页面路由，不是后端 API 地址';
             case 'static':
                 return '📁 静态文件在 Nginx 中挂载的目录路径，必须以 /tools/ 开头，并以 / 结尾';
             case 'external':
                 return '🔗 完整的 HTTPS/HTTP 外部链接，将直接在新窗口打开';
-            case 'executable':
-                return '⚙️ 可执行文件绝对路径，需放置在允许目录下（如 executables 文件夹）';
             case 'streamlit':
-                return '📊 Streamlit 应用，需预先部署并由 Nginx 代理（端口配置在下方）';
+                return '📊 填写已经部署并由网关代理的路径，平台不会临时启动服务器进程';
             default:
                 return '';
         }
@@ -146,29 +130,26 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
         if (!tags.trim()) newErrors.tags = '标签不能为空（逗号分隔）';
         if (!owner.trim()) newErrors.owner = '负责人不能为空';
         if (!icon.trim()) newErrors.icon = '图标不能为空';
+        if (!namespace.trim()) {
+            newErrors.namespace = '工具空间不能为空';
+        } else if (!/^[a-z0-9][a-z0-9-]{0,49}$/.test(namespace.trim())) {
+            newErrors.namespace = '只能包含小写字母、数字和连字符，长度 1-50';
+        }
         if (!source.trim()) {
-            // 外部链接允许为空（打开时给提示）；其余类型必填
-            if (type !== 'external') newErrors.source = '资源路径不能为空';
-        } else if (type === 'static' && !source.startsWith('/tools/')) {
-            newErrors.source = '静态文件路径必须以 /tools/ 开头';
-        } else if (type === 'external') {
-            // 软校验：URL 不合规/为空不阻止保存，打开时前端给提示
+            newErrors.source = '资源路径不能为空';
+        } else if (type === 'static' && source.trim().replace(/\/+$/, '') !== `/tools/${namespace.trim()}`) {
+            newErrors.source = '静态路径必须为 /tools/<namespace>/，且与工具空间一致';
+        } else if (type === 'internal' && (!source.startsWith('/') || source.startsWith('/api/'))) {
+            newErrors.source = '内部工具必须填写主站前端路由，不能填写 API 地址';
+        } else if ((type === 'external' || type === 'streamlit') && !/^(https?:\/\/|\/(?!\/))/.test(source.trim())) {
+            newErrors.source = '请填写 http(s) URL 或以 / 开头的站内代理路径';
+        } else if ((type === 'external' || type === 'streamlit') && source.trim().startsWith('/') && source.trim().replace(/\/+$/, '') !== `/${namespace.trim()}`) {
+            newErrors.source = '站内代理路径必须为 /<namespace>/，且与工具空间一致';
+        } else if (/^(javascript:|data:|file:)/i.test(source.trim())) {
+            newErrors.source = '不允许使用不安全的地址协议';
         }
         if (type === 'static' && !entry.trim()) {
             newErrors.entry = '入口文件不能为空';
-        }
-        if (type === 'executable' && !executablePath.trim()) {
-            newErrors.executablePath = '可执行文件路径不能为空';
-        }
-        if (type === 'executable' && executableArgs.trim()) {
-            try {
-                const parsed = JSON.parse(executableArgs);
-                if (!Array.isArray(parsed)) {
-                    newErrors.executableArgs = '参数必须是 JSON 数组';
-                }
-            } catch {
-                newErrors.executableArgs = '参数必须是有效的 JSON 格式';
-            }
         }
 
         setErrors(newErrors);
@@ -183,17 +164,14 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             description: description.trim(),
             group_name: groupName.trim(),
             func_type: funcType.trim(),
-            namespace: namespace.trim() || groupName.trim(),
+            namespace: namespace.trim(),
             tags: tags.split(',').map(s => s.trim()).filter(Boolean),
             owner: owner.trim(),
             icon: icon.trim(),
             type,
             source: source.trim(),
             entry: type === 'static' ? entry.trim() : undefined,
-            executable_path: type === 'executable' ? executablePath.trim() : null,
-            executable_args: type === 'executable' && executableArgs.trim() ? JSON.parse(executableArgs) : null,
-            executable_working_dir: type === 'executable' && executableWorkingDir.trim() ? executableWorkingDir.trim() : null,
-            streamlit_port: type === 'streamlit' ? streamlitPort : null,
+            is_public: isPublic,
         };
 
         try {
@@ -267,13 +245,15 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
 
                     {/* 工具空间 / 命名空间 */}
                     <div className="col-span-2">
+                        <label className="text-sm font-medium text-red-500">*</label>
                         <label className="text-sm font-medium ml-1">工具空间（namespace）</label>
                         <Input
                             value={namespace}
                             onChange={e => setNamespace(e.target.value)}
-                            className="mt-1"
+                            className={`mt-1 ${errors.namespace ? 'border-danger' : ''}`}
                             placeholder="推荐填写工具英文短名，如 device-query"
                         />
+                        {errors.namespace && <p className="text-xs text-danger mt-1">{errors.namespace}</p>}
                         <p className="text-xs text-text-muted mt-1">
                             📁 用途：定义该工具在文件中心的专属存储/权限目录名。
                         </p>
@@ -281,7 +261,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
                             存放路径：{groupName ? `「${groupName} / ${funcType || '功能型'} / ${namespace || '工具空间'} / 文件」` : '「一级分组 / 功能型 / 工具空间 / 文件」'}
                         </p>
                         <p className="text-xs text-text-muted mt-1">
-                            ✍️ 命名规则：使用英文或拼音短名（小写、可用 - 连接，如 device-query、waf-report）；需在平台内唯一。留空则默认使用「一级分组名」作为工具空间。
+                            ✍️ 命名规则：使用英文或拼音短名（小写、可用 - 连接，如 device-query、waf-report）；需在平台内唯一。
                         </p>
                     </div>
 
@@ -347,10 +327,9 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
                                 <span>{type}</span>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="internal">内部后端API</SelectItem>
+                                <SelectItem value="internal">主站内部页面</SelectItem>
                                 <SelectItem value="static">静态前端文件</SelectItem>
                                 <SelectItem value="external">外部链接</SelectItem>
-                                <SelectItem value="executable">可执行程序 (.exe/.bat)</SelectItem>
                                 <SelectItem value="streamlit">Streamlit 应用</SelectItem>
                             </SelectContent>
                         </Select>
@@ -371,62 +350,6 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
                         </div>
                     )}
 
-                    {/* 可执行程序专用字段 */}
-                    {type === 'executable' && (
-                        <>
-                            <div className="col-span-2">
-                                <label className="text-sm font-medium text-red-500">*</label>
-                                <label className="text-sm font-medium ml-1">可执行文件路径</label>
-                                <Input
-                                    value={executablePath}
-                                    onChange={e => setExecutablePath(e.target.value)}
-                                    className={`mt-1 ${errors.executablePath ? 'border-danger' : ''}`}
-                                    placeholder="C:\\tools\\myapp.exe"
-                                />
-                                {errors.executablePath && <p className="text-xs text-danger mt-1">{errors.executablePath}</p>}
-                                <p className="text-xs text-text-muted mt-1">
-                                    ⚠️ 必须放置在允许目录下（如 executables 文件夹）
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">工作目录</label>
-                                <Input
-                                    value={executableWorkingDir}
-                                    onChange={e => setExecutableWorkingDir(e.target.value)}
-                                    className="mt-1"
-                                    placeholder="C:\\tools"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">启动参数（JSON 数组）</label>
-                                <Input
-                                    value={executableArgs}
-                                    onChange={e => setExecutableArgs(e.target.value)}
-                                    className={`mt-1 ${errors.executableArgs ? 'border-danger' : ''}`}
-                                    placeholder='["--port", "8080"]'
-                                />
-                                {errors.executableArgs && <p className="text-xs text-danger mt-1">{errors.executableArgs}</p>}
-                            </div>
-                        </>
-                    )}
-
-                    {/* Streamlit 专用字段 */}
-                    {type === 'streamlit' && (
-                        <div>
-                            <label className="text-sm font-medium">Streamlit 端口</label>
-                            <Input
-                                type="number"
-                                value={streamlitPort || ''}
-                                onChange={e => setStreamlitPort(e.target.value ? parseInt(e.target.value) : undefined)}
-                                className="mt-1"
-                                placeholder="8501"
-                            />
-                            <p className="text-xs text-text-muted mt-1">
-                                📊 Nginx 将代理到此端口，需提前部署 Streamlit 服务
-                            </p>
-                        </div>
-                    )}
-
                     {/* 资源路径（必填） */}
                     <div className="col-span-2">
                         <label className="text-sm font-medium text-red-500">*</label>
@@ -439,17 +362,20 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
                         />
                         {errors.source && <p className="text-xs text-danger mt-1">{errors.source}</p>}
                         <p className="text-xs text-text-muted mt-1">{getSourceHint()}</p>
-                        {type === 'external' && source.trim() && !source.startsWith('http://') && !source.startsWith('https://') && (
-                            <p className="text-xs text-amber-600 mt-1">
-                                ⚠️ 建议以 http:// 或 https:// 开头，否则点击打开时可能无法正常访问。
-                            </p>
-                        )}
-                        {type === 'external' && !source.trim() && (
-                            <p className="text-xs text-amber-600 mt-1">
-                                ⚠️ 未填写外部链接，使用时点击「打开」将提示地址无效。
-                            </p>
-                        )}
                     </div>
+
+                    <label className="col-span-2 flex items-start gap-3 rounded-xl border border-border-default p-3">
+                        <input
+                            type="checkbox"
+                            checked={isPublic}
+                            onChange={(event) => setIsPublic(event.target.checked)}
+                            className="mt-1"
+                        />
+                        <span>
+                            <span className="block text-sm font-medium text-text-primary">全员可用</span>
+                            <span className="mt-1 block text-xs text-text-muted">关闭时仅管理员和已授权用户/角色可见；新工具默认关闭。</span>
+                        </span>
+                    </label>
                 </div>
 
                 <DialogFooter className="gap-2">

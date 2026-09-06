@@ -1,10 +1,11 @@
-from sqlalchemy import Column, String, Text, Integer, Float, DateTime, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, Float, DateTime, Boolean, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
 
 class Tool(Base):
     __tablename__ = "tools"
+    __table_args__ = (UniqueConstraint("namespace", name="uq_tools_namespace"),)
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(100), nullable=False)
@@ -16,6 +17,7 @@ class Tool(Base):
     icon = Column(String(10), nullable=True)
     rating = Column(Float, default=0.0)
     is_active = Column(Boolean, default=True)
+    is_public = Column(Boolean, default=False, nullable=False)
     status = Column(String(20), default="active")  # active, inactive, deprecated
 
     type = Column(String(20), default="internal")  # internal, static, external

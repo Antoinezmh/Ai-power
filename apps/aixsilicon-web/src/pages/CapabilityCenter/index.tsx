@@ -7,7 +7,6 @@ import {
   CircuitBoard,
   FileText,
   FlaskConical,
-  Gauge,
   Layers3,
   ShieldCheck,
   Wrench,
@@ -16,7 +15,7 @@ import { Button } from '@aixsilicon/ui';
 import { useToolsInfinite } from '@/features/tools/hooks/useTools';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
-type ModuleId = 'spec' | 'model' | 'test' | 'reliability';
+type ModuleId = 'epitaxy' | 'process' | 'design' | 'validation';
 
 type CapabilityModule = {
   id: ModuleId;
@@ -33,33 +32,33 @@ type CapabilityModule = {
 };
 
 const modules: Record<ModuleId, CapabilityModule> = {
-  spec: {
-    id: 'spec', index: '01', eyebrow: 'SPECIFICATION', title: '规格', summary: '把客户需求收敛为可验证的器件定义。',
-    description: '在这里组织参数表、FoM、热阻与应用边界，让每一项设计输入都有可追溯的依据。',
-    icon: Gauge, accent: 'bg-[#e8f1ff] text-[#1769d1]', stage: 'G0 规格定义',
-    focus: ['需求与 datasheet 差异分析', 'FoM、Ron,sp 与热阻估算', '设计输入与准出条件归档'],
-    agentPrompt: '请协助我梳理当前器件的规格定义、关键 FoM 和待确认的设计输入。',
+  epitaxy: {
+    id: 'epitaxy', index: '01', eyebrow: 'EPITAXY', title: '外延', summary: '把外延结构、掺杂窗口与来料数据收敛为可追溯的工程输入。',
+    description: '围绕外延层厚度、电阻率、掺杂浓度与片内均匀性，建立从规格设定到来料评价的连续依据。',
+    icon: Layers3, accent: 'bg-[#e8f1ff] text-[#1769d1]', stage: 'FLOW 01 外延工程',
+    focus: ['外延结构与耐压目标拆解', '厚度、电阻率与掺杂窗口分析', '来料测试、均匀性与异常追溯'],
+    agentPrompt: '请协助我梳理当前器件的外延结构、掺杂窗口和待确认的来料评价指标。',
   },
-  model: {
-    id: 'model', index: '02', eyebrow: 'MODELING', title: '建模', summary: '让仿真参数与实测结果持续对齐。',
-    description: '聚合 TCAD 校准、子电路提取和 corner 分析工作，为器件决策提供可复用的模型基础。',
-    icon: CircuitBoard, accent: 'bg-[#f0edff] text-[#6750c8]', stage: 'G1 建模验证',
-    focus: ['IV / CV 实测数据校准', 'TCAD 参数与工艺窗口管理', 'SPICE 子电路与 corner 输出'],
-    agentPrompt: '请帮我规划 TCAD 参数校准与 SPICE 子电路提取的建模工作。',
+  process: {
+    id: 'process', index: '02', eyebrow: 'PROCESS', title: '工艺', summary: '让工艺流程、关键参数与过程窗口可控协同。',
+    description: '统一承载光刻、注入、扩散、氧化、刻蚀与金属化等过程数据，连接工艺窗口和制造结果。',
+    icon: FlaskConical, accent: 'bg-[#f0edff] text-[#6750c8]', stage: 'FLOW 02 工艺开发',
+    focus: ['工艺流程与关键控制点管理', '热预算、注入与扩散窗口分析', '过程异常、split lot 与良率追溯'],
+    agentPrompt: '请帮我规划当前器件的工艺流程、关键参数窗口和需要验证的 split 方案。',
   },
-  test: {
-    id: 'test', index: '03', eyebrow: 'CHARACTERIZATION', title: '测试', summary: '把测试波形转化为清晰的器件结论。',
-    description: '在同一空间连接 SOA、双脉冲、热阻拟合与 binning 分析，沉淀测试过程与结果。',
-    icon: FlaskConical, accent: 'bg-[#e8f8f4] text-[#16846b]', stage: 'G4 测试表征',
-    focus: ['SOA 与 TLP 安全边界分析', '双脉冲开关损耗提取', '热阻拟合、binning 与报告输出'],
-    agentPrompt: '请协助我分析测试数据，并整理 SOA、双脉冲损耗和热阻的下一步工作。',
+  design: {
+    id: 'design', index: '03', eyebrow: 'DESIGN', title: '设计', summary: '从器件结构到版图取舍，形成可制造的性能方案。',
+    description: '在同一空间连接 TCAD、结构参数、终端设计、版图规则和 SPICE 模型，让设计决策有据可查。',
+    icon: CircuitBoard, accent: 'bg-[#e8f8f4] text-[#16846b]', stage: 'FLOW 03 器件设计',
+    focus: ['结构参数、终端与 cell 设计', 'TCAD 仿真与工艺协同校准', '版图规则、SPICE 与 corner 输出'],
+    agentPrompt: '请协助我规划器件结构、TCAD 仿真和版图设计之间的验证路径。',
   },
-  reliability: {
-    id: 'reliability', index: '04', eyebrow: 'RELIABILITY', title: '可靠性', summary: '让每一次老化试验都通向可解释的寿命判断。',
-    description: '围绕 HTOL、寿命预测、失效归因与样本预警，构建连续的可靠性证据链。',
-    icon: ShieldCheck, accent: 'bg-[#fff3e5] text-[#be6515]', stage: 'G5 可靠性验证',
-    focus: ['HTOL / HTRB 老化试验跟踪', '寿命分布与失效机理分析', '样本异常预警与闭环归因'],
-    agentPrompt: '请协助我梳理可靠性试验、寿命预测和样本预警的分析路径。',
+  validation: {
+    id: 'validation', index: '04', eyebrow: 'VALIDATION', title: '验证', summary: '用电性、动态与可靠性证据确认设计和工艺结果。',
+    description: '连接参数测试、SOA、双脉冲、热阻、HTOL 与失效分析，形成从样品到结论的验证闭环。',
+    icon: ShieldCheck, accent: 'bg-[#fff3e5] text-[#be6515]', stage: 'FLOW 04 产品验证',
+    focus: ['静态、动态与热特性测试', 'SOA、双脉冲与 binning 分析', '可靠性试验、失效归因与报告'],
+    agentPrompt: '请协助我分析当前验证数据，并整理电性、动态和可靠性试验的下一步工作。',
   },
 };
 

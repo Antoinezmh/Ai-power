@@ -4,11 +4,14 @@ export interface ToolSuggestion { id: string; name: string; description?: string
 export interface KnowledgeSource { title: string; source: string; excerpt: string; }
 export interface ChatReply { reply: string; mode: 'agent' | 'catalog'; suggestions: ToolSuggestion[]; sources: KnowledgeSource[]; }
 export interface AgentConfig { provider: string; model: string; base_url: string; enabled: boolean; key_configured: boolean; updated_at?: string | null; }
-export interface AgentStatus { connected: boolean; mode: 'agent' | 'catalog'; }
+export interface AgentStatus { connected: boolean; mode: 'agent' | 'catalog'; source: 'personal' | 'platform' | 'catalog'; }
+export interface ChatHistoryMessage { role: 'user' | 'assistant'; content: string; }
 
 export const chatApi = {
-  send: (message: string) => api.post<ChatReply>('/api/v1/chat/', { message }),
+  send: (message: string, history: ChatHistoryMessage[] = []) => api.post<ChatReply>('/api/v1/chat/', { message, history }),
   getStatus: () => api.get<AgentStatus>('/api/v1/chat/status'),
   getConfig: () => api.get<AgentConfig>('/api/v1/chat/config'),
   saveConfig: (data: Omit<AgentConfig, 'key_configured' | 'updated_at'> & { api_key?: string }) => api.put<AgentConfig>('/api/v1/chat/config', data),
+  getPersonalConfig: () => api.get<AgentConfig>('/api/v1/chat/personal-config'),
+  savePersonalConfig: (data: Omit<AgentConfig, 'key_configured' | 'updated_at'> & { api_key?: string }) => api.put<AgentConfig>('/api/v1/chat/personal-config', data),
 };

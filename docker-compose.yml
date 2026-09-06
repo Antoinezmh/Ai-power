@@ -13,6 +13,10 @@ services:
       timeout: 5s
       retries: 20
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
+    security_opt: ["no-new-privileges:true"]
     networks: [aipower]
     logging:
       options: { max-size: "10m", max-file: "3" }
@@ -32,7 +36,13 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       REDIS_URL: redis://redis:6379/0
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env}
+      TOOL_PUBLIC_ORIGIN: ${TOOL_PUBLIC_ORIGIN:?Set TOOL_PUBLIC_ORIGIN in .env}
       FILE_STORAGE_ROOT: /data/files
+      FILE_STORAGE_QUOTA_BYTES: ${FILE_STORAGE_QUOTA_BYTES:-21474836480}
+      FILE_STORAGE_MIN_FREE_BYTES: ${FILE_STORAGE_MIN_FREE_BYTES:-1073741824}
+      AUDIT_LOG_RETENTION_DAYS: ${AUDIT_LOG_RETENTION_DAYS:-180}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env}
     volumes:
       - file-data:/data/files
@@ -48,13 +58,21 @@ services:
       retries: 12
       start_period: 20s
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.5
+    pids_limit: 256
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
     networks: [aipower]
     logging:
       options: { max-size: "10m", max-file: "3" }
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
     volumes:
       - redis-data:/data
     healthcheck:
@@ -63,6 +81,10 @@ services:
       timeout: 3s
       retries: 10
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt: ["no-new-privileges:true"]
     networks: [aipower]
     logging:
       options: { max-size: "10m", max-file: "3" }
@@ -74,7 +96,21 @@ services:
       TOOL_DATA_DIR: /data
     volumes:
       - demo-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
     networks: [aipower]
     logging:
       options: { max-size: "10m", max-file: "3" }
@@ -85,20 +121,26 @@ services:
       dockerfile: ./deploy/web.Dockerfile
     ports:
       - "${WEB_BIND_ADDRESS:-0.0.0.0}:${WEB_PORT:-8080}:80"
+      - "${TOOL_BIND_ADDRESS:-0.0.0.0}:${TOOL_PORT:-8081}:81"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/tools.d:/etc/nginx/tools.d:ro
       - ./static/tools:/usr/share/nginx/html/tools:ro
     depends_on:
       api:
         condition: service_healthy
       demo-dynamic:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/healthz"]
       interval: 10s
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt: ["no-new-privileges:true"]
     networks: [aipower]
     logging:
       options: { max-size: "10m", max-file: "3" }

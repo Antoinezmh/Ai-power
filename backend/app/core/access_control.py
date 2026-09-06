@@ -31,6 +31,7 @@ PERMISSIONS = (
     ("管理资料", "button:files:manage", PermissionType.button, "menu:files", None, "移动、删除或归档空间资料"),
     ("AI 助手", "menu:chat", PermissionType.menu, None, "/chat", "进入 AI 助手"),
     ("使用 AI 助手", "button:chat:use", PermissionType.button, "menu:chat", None, "向 AI 提问并调用已授权上下文"),
+    ("配置 AI 助手", "button:chat:configure", PermissionType.button, "menu:chat", None, "配置平台共享模型服务"),
     ("个人设置", "menu:settings", PermissionType.menu, None, "/settings", "查看个人设置"),
     ("查看设置", "button:settings:view", PermissionType.button, "menu:settings", None, "查看个人设置"),
     ("修改设置", "button:settings:edit", PermissionType.button, "menu:settings", None, "修改个人资料与个人密钥"),
@@ -118,7 +119,7 @@ async def seed_access_control(db: AsyncSession) -> dict[str, Role]:
     for role_code, definition in ROLES.items():
         role = roles_by_name.get(definition["name"])
         if not role:
-            role = Role(name=definition["name"], description=definition["description"], is_default=role_code == "engineer")
+            role = Role(name=definition["name"], description=definition["description"], is_default=False)
             db.add(role)
             await db.flush()
         role_lookup[role_code] = role
@@ -129,6 +130,9 @@ async def seed_access_control(db: AsyncSession) -> dict[str, Role]:
             permission_id = permissions_by_code[code].id
             if permission_id not in existing_ids:
                 db.add(RolePermission(role_id=role.id, permission_id=permission_id))
+    default_role = await db.scalar(select(Role).where(Role.is_default.is_(True)).limit(1))
+    if not default_role:
+        role_lookup["engineer"].is_default = True
     return role_lookup
 
 

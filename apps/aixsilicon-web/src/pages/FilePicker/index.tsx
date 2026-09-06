@@ -100,7 +100,7 @@ export default function FilePicker() {
         }
         window.parent.postMessage(
             { type: 'FILE_PICKER_RESULT', files: selectedFiles },
-            '*',
+            window.location.origin,
         );
         setSelected(new Set());
         // iframe 内自动关闭
@@ -108,7 +108,7 @@ export default function FilePicker() {
     };
 
     const handleCancel = () => {
-        window.parent.postMessage({ type: 'FILE_PICKER_CANCEL' }, '*');
+        window.parent.postMessage({ type: 'FILE_PICKER_CANCEL' }, window.location.origin);
         window.close();
     };
 
@@ -140,7 +140,7 @@ export default function FilePicker() {
             {/* 筛选区 */}
             <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
                 <div className="flex items-center gap-1">
-                    <Select value={group} onValueChange={(v) => { setGroup(v); setFuncType(''); }}>
+                    <Select value={group || '__all'} onValueChange={(v) => { setGroup(v === '__all' ? '' : v); setFuncType(''); }}>
                         <SelectTrigger className="h-8 w-36">
                             <SelectValue placeholder="全部分组" />
                         </SelectTrigger>
@@ -151,7 +151,7 @@ export default function FilePicker() {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={funcType} onValueChange={setFuncType}>
+                    <Select value={funcType || '__all'} onValueChange={(v) => setFuncType(v === '__all' ? '' : v)}>
                         <SelectTrigger className="h-8 w-36">
                             <SelectValue placeholder="全部功能型" />
                         </SelectTrigger>
@@ -162,7 +162,7 @@ export default function FilePicker() {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={namespaceFilter} onValueChange={setNamespaceFilter}>
+                    <Select value={namespaceFilter || '__all'} onValueChange={(v) => setNamespaceFilter(v === '__all' ? '' : v)}>
                         <SelectTrigger className="h-8 w-36">
                             <SelectValue placeholder="全部工具" />
                         </SelectTrigger>

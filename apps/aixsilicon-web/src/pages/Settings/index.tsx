@@ -1,26 +1,24 @@
 import { useState } from 'react';
 import { Card } from '@aixsilicon/ui';
-import { User, Bell, Palette } from 'lucide-react';
+import { Bot, Key, Shield, User } from 'lucide-react';
 import ProfileForm from './components/ProfileForm';
 import SecurityForm from './components/SecurityForm';
-import NotificationForm from './components/NotificationForm';
-import AppearanceForm from './components/AppearanceForm';
 import ApiKeysForm from './components/ApiKeysForm';
-import { useSettings } from './hooks/useSettings';
+import AgentSettingsForm from './components/AgentSettingsForm';
+import { useProfile } from '@/features/settings/hooks/useSettings';
 
-type TabKey = 'profile' | 'security' | 'notification' | 'appearance' | 'api';
+type TabKey = 'profile' | 'security' | 'api' | 'agent';
 
 const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'profile', label: '个人资料', icon: <User className="w-4 h-4" /> },
-  // { key: 'security', label: '安全设置', icon: <Shield className="w-4 h-4" /> },
-  { key: 'notification', label: '通知偏好', icon: <Bell className="w-4 h-4" /> },
-  { key: 'appearance', label: '界面设置', icon: <Palette className="w-4 h-4" /> },
-  // { key: 'api', label: 'API 密钥', icon: <Key className="w-4 h-4" /> },
+  { key: 'security', label: '安全设置', icon: <Shield className="w-4 h-4" /> },
+  { key: 'api', label: 'API 密钥', icon: <Key className="w-4 h-4" /> },
+  { key: 'agent', label: '智能体设置', icon: <Bot className="w-4 h-4" /> },
 ];
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabKey>('profile');
-  const settings = useSettings();
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile();
 
   return (
     <div className="flex h-full gap-6">
@@ -48,11 +46,14 @@ export default function Settings() {
       {/* 右侧内容 */}
       <div className="flex-1 min-w-0">
         <Card className="p-6">
-          {activeTab === 'profile' && <ProfileForm />}
+          {activeTab === 'profile' && (profileLoading
+            ? <div className="py-10 text-center text-text-muted">正在加载个人资料…</div>
+            : profileError
+              ? <div className="py-10 text-center text-danger">个人资料加载失败：{(profileError as Error).message}</div>
+              : <ProfileForm profile={profile} />)}
           {activeTab === 'security' && <SecurityForm />}
-          {activeTab === 'notification' && <NotificationForm settings={settings} />}
-          {activeTab === 'appearance' && <AppearanceForm settings={settings} />}
           {activeTab === 'api' && <ApiKeysForm />}
+          {activeTab === 'agent' && <AgentSettingsForm />}
         </Card>
       </div>
     </div>

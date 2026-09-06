@@ -93,6 +93,14 @@ export function useUsers(params?: { skip?: number; limit?: number }) {
     });
 }
 
+export function useAllUsers() {
+    return useQuery({
+        queryKey: [USERS_QUERY_KEY, 'all'],
+        queryFn: permissionApi.getAllUsers,
+        staleTime: 60 * 1000,
+    });
+}
+
 export function useUser(id: string) {
     return useQuery({
         queryKey: [USERS_QUERY_KEY, id],

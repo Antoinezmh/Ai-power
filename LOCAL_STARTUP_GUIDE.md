@@ -1,164 +1,76 @@
-# Ai Power 本地启动运行指南
+# AI × Power 本地启动指南
 
-> 适用项目：`Ai-power`（Ai Power，功率器件研发 AI 平台）
-> 技术栈：前端 React+Vite（Turbo/Pnpm monorepo） + 后端 FastAPI（Python）
+本地开发需要 Node.js 20、pnpm 9 与 Python 3.11。默认使用 SQLite；Redis
+不可用时开发环境会降级运行。
 
----
+## 1. 安装依赖
 
-## 一、总要：本地启动需要 3 个进程
+在仓库根目录执行：
 
-| 进程 | 作用 | 端口 |
-| ---- | ---- | ---- |
-| ① 后端 API（FastAPI + Uvicorn） | 提供 `/api` 业务接口 | 8000 |
-| ② 静态工具服务（Python http.server） | 提供 `/tools` 下第三方 dist 静态文件 | 8001 |
-| ③ 前端 Dev Server（Vite） | 提供页面 `http://localhost:3000` | 3000 |
-
-前端通过 Vite 代理把 `/api` → 8000、`/tools` → 8001。
-（若有方式乙集成工具，如 `/cp`→5000、`/rag`→8501，需额外启动对应工具服务。）
-
----
-
-## 二、环境前置检查
-
-| 软件 | 版本要求 | 说明 |
-| ---- | -------- | ---- |
-| Node.js | ≥ 20.x | 已装 v20.18.0 ✅ |
-| pnpm | 9.x | 已装 9.1.2 ✅ |
-| Python | ≥ 3.11（**本地为 3.10.2，见注意事项**） | 已装 3.10.2 ⚠️ |
-| PostgreSQL | 15.x 或 SQLite | 本项目用 SQLite，无需安装 ✅ |
-| Redis | 可选 | main.py 已做降级，可省 ✅ |
-| Git | 任意 | 已装 ✅ |
-
----
-
-## 三、第一步：拉取代码（若已完成可跳过）
-
-```bash
-git clone https://github.com/Antoinezmh/Ai-power.git
-cd Ai-power
-```
-
----
-
-## 四、第二步：安装前端依赖（根目录）
-
-```bash
+```powershell
 pnpm install
-```
-
-> 在项目根目录执行，会通过 `pnpm-workspace.yaml` 安装根 + `apps/*` + `packages/*` 全部依赖。
-
----
-
-## 五、第三步：启动后端服务（终端 1）
-
-```bash
 cd backend
-
-# 1. 创建并激活虚拟环境（若 venv 已存在可跳过）
-python -m venv venv
-.\venv\Scripts\Activate.ps1     # PowerShell 激活
-
-# 2. 安装依赖
-pip install -r requirements.txt
-
-# 3. 后端启动时会自动创建 SQLite 表并写入开发演示账号
-#    默认账号：admin / admin123
-
-# 4. 启动后端
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-**验证**：浏览器访问 `http://localhost:8000/docs`（Swagger API 文档）或 `http://localhost:8000/api/health`。
+## 2. 升级数据库并启动 API
 
----
+每次拉取包含 `backend/alembic/versions` 变更的代码后，先运行迁移。不要只依赖
+FastAPI 的开发期 `create_all`，它只能创建缺失表，不能给旧表增加字段或约束。
 
-## 六、第四步：启动静态工具服务（终端 2）
+```powershell
+cd backend
+.venv\Scripts\python -m alembic upgrade head
+.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
+```
 
-```bash
-cd static/tools
+可访问 `http://127.0.0.1:8000/api/health` 和
+`http://127.0.0.1:8000/docs` 验证。开发演示账号只会在
+`SEED_DEMO_DATA=true` 时创建；生产配置会拒绝该选项。
+
+## 3. 启动前端
+
+另开终端，在仓库根目录执行：
+
+```powershell
+pnpm --filter aixsilicon-web dev
+```
+
+入口为 `http://127.0.0.1:3000`。若 Vite 因端口占用切换到 3001，后端默认
+CORS 已包含该地址。
+
+## 4. 可选工具服务
+
+静态示例：
+
+```powershell
+cd static\tools
 python -m http.server 8001
 ```
 
-**验证**：浏览器访问 `http://localhost:8001/demo-monitor/index.html`。
+动态示例：
 
-> `static/tools/` 已含 `demo-monitor` 示例工具。
-> 新增工具：把 dist 放到 `static/tools/<工具名>/index.html` 即可被此服务提供。
-
----
-
-## 七、第五步：启动前端服务（终端 3）
-
-在项目**根目录**执行：
-
-```bash
-pnpm run dev --filter=aixsilicon-web
+```powershell
+cd third_party\demo-dynamic
+python -m uvicorn app:app --reload --port 8010
 ```
 
-前端运行在 `http://localhost:3000`（端口被占用会自动换，如 3001）。
+Vite 仅代理当前仓库实际提供的 `/tools/` 和 `/demo-dynamic/`。新增动态工具时，
+需要显式增加本地 Vite 代理；生产环境则按
+`deploy/tools.d/README.md` 增加受鉴权的 Nginx 路由。
 
-**验证**：浏览器打开 `http://localhost:3000`，看到登录页即可。
+## 5. 上线前检查
 
----
-
-## 八、访问验证汇总
-
-| 地址 | 内容 |
-| ---- | ---- |
-| http://localhost:3000 | 前端登录/主界面 |
-| http://localhost:8000/docs | 后端 API 文档 |
-| http://localhost:8000/api/health | 后端健康检查 |
-| http://localhost:8001/demo-monitor/ | 静态示例工具 |
-
----
-
-## 九、三终端启动速查表
-
-| 终端 | 命令 |
-| ---- | ---- |
-| 终端 1（后端） | `cd backend && .\venv\Scripts\Activate.ps1; uvicorn app.main:app --reload --port 8000` |
-| 终端 2（静态） | `cd static/tools && python -m http.server 8001` |
-| 终端 3（前端） | `pnpm run dev --filter=aixsilicon-web` |
-
----
-
-## 十、Docker 一键启动（可选，生产/全栈）
-
-```bash
-# 项目根目录
-docker compose up -d
+```powershell
+pnpm lint
+pnpm typecheck
+pnpm --filter aixsilicon-web build
+cd backend
+.venv\Scripts\python -m pytest tests -q
+.venv\Scripts\python -m alembic upgrade head
 ```
 
-生产环境用 Nginx 托管静态文件 + 反代，无需本地第三、第四步的手动进程。
-
----
-
-## 十一、常用命令速查
-
-| 操作 | 命令 |
-| ---- | ---- |
-| 安装前端依赖 | `pnpm install` |
-| 启动前端 | `pnpm run dev --filter=aixsilicon-web` |
-| 启动后端 | `cd backend && uvicorn app.main:app --reload` |
-| 启动静态服务 | `cd static/tools && python -m http.server 8001` |
-| 数据库初始化 | 后端首次启动时自动完成 |
-| 构建前端 | `pnpm run build --filter=aixsilicon-web` |
-| 启动 Docker 全栈 | `docker compose up -d` |
-
----
-
-## 十二、常见坑与注意事项（基于源码验证）
-
-1. **Python 版本**：推荐 3.11+。当前机器为 3.10.2，若 `pip install -r requirements.txt` 或 `alembic upgrade` 报错，建议安装 Python 3.11+，或使用已存在的 `venv`（注意其解释器版本）。
-2. **Redis 不是必需**：`app/main.py` 中 Redis 连不上仅打印 warning，不会阻止启动；本地无需 Redis。
-3. **数据库**：本地默认使用 `backend/test.db`（SQLite），无需 PostgreSQL；不要把生产配置中的数据库占位符直接用于本地启动。
-4. **数据库初始化**：当前集成版在后端启动时自动创建 SQLite 表并初始化默认管理员，不需要执行不存在的 Alembic 或 `scripts/init_db.py`。
-5. **前端端口占用**：3000 被占会自动换端口，若换了请同时确认后端 `.env` 的 `CORS_ORIGINS` 是否包含该端口（默认含 3000/3001/8080）。
-6. **静态工具无数据**：`static/tools/` 需至少保留一个示例工具（如 `demo-monitor`），否则工具市场无内容。
-7. **SSO 默认关闭**：`.env` 中 `SSO_ENABLED=false`，本地直接用 admin/admin123 登录即可。
-
----
-
-## 十三、方式乙集成工具（按需）
-
-若平台中集成了「CP 报表生成器」(Flask:5000) 或「功率器件知识库 RAG」(Streamlit:8501) 等第三方工具，本地联调需额外启动它们，前端 Vite 已配好 `/cp`、`/rag`、`/streamlit` 代理。生产环境由 Nginx 反代，无需本地启动。
+Docker 生产部署不是本地开发配置的直接替代。复制并填写
+`.env.production.example` 后，再按 `DEPLOYMENT.md` 启动；主站和工具站必须使用
+不同浏览器源。

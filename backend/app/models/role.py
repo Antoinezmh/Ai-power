@@ -1,10 +1,19 @@
-from sqlalchemy import Column, String, Text, Boolean, DateTime
+from sqlalchemy import Column, String, Text, Boolean, DateTime, Index, text
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
 
 class Role(Base):
     __tablename__ = "roles"
+    __table_args__ = (
+        Index(
+            "uq_roles_single_default",
+            "is_default",
+            unique=True,
+            postgresql_where=text("is_default IS TRUE"),
+            sqlite_where=text("is_default = 1"),
+        ),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(50), unique=True, index=True, nullable=False)

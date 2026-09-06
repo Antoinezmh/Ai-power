@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user as get_authenticated_user
 from app.schemas.file_asset import (
     FileAssetOut, FileAssetUpdate, DivisionOut, DeleteResult,
 )
@@ -15,14 +15,24 @@ from app.models.file_asset import FileAsset
 from app.models.file_permission import FilePermission
 from app.models.user import User
 from app.services.redis_service import RedisService
+from app.services.permission_service import PermissionService
+from app.core.security import create_file_download_ticket, decode_file_download_ticket
+from app.core.permissions import require_permission
 
 router = APIRouter(prefix="/files", tags=["文件中心"])
 
 
-def _require_admin(user: User) -> None:
-    """仅超级管理员可通过。"""
-    if not FilePermissionService.is_admin(user):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "仅管理员可执行该操作")
+async def get_current_user(
+    user: User = Depends(get_authenticated_user),
+    _: bool = Depends(require_permission("button:files:view")),
+) -> User:
+    """Authenticate normal file APIs without blocking signed downloads.
+
+    The ticket redemption route intentionally has no dependency on this
+    helper; it verifies the signed ticket, live user and live file scope
+    itself before streaming bytes.
+    """
+    return user
 
 
 async def _require_space(db: AsyncSession, user: User, group: str,
@@ -86,8 +96,8 @@ async def list_permissions(
     user_id: str,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:permissions:manageUsers")),
 ):
-    _require_admin(user)
     grants = await FilePermissionService.list_user_grants(db, user_id)
     return [
         {
@@ -110,8 +120,8 @@ async def grant_permission(
     access_level: str = Form("read"),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:permissions:manageUsers")),
 ):
-    _require_admin(user)
     if access_level not in ("read", "write", "manage"):
         raise HTTPException(status.HTTP_400_BAD_REQUEST,
                             "access_level 仅可为 read/write/manage")
@@ -122,9 +132,12 @@ async def grant_permission(
         if (g.group_name == group_name and g.func_type == func_type
                 and g.namespace == namespace):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "该授权已存在")
-    fp = await FilePermissionService.grant(
-        db, user_id, group_name, func_type, namespace, access_level,
-    )
+    try:
+        fp = await FilePermissionService.grant(
+            db, user_id, group_name, func_type, namespace, access_level,
+        )
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
     return {"id": fp.id, "group_name": fp.group_name, "func_type": fp.func_type,
             "namespace": fp.namespace, "access_level": fp.access_level}
 
@@ -134,8 +147,8 @@ async def revoke_permission(
     permission_id: str,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:permissions:manageUsers")),
 ):
-    _require_admin(user)
     fp = await db.get(FilePermission, permission_id)
     if not fp:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "授权记录不存在")
@@ -153,6 +166,7 @@ async def upload(
     tags: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:files:upload")),
 ):
     await RedisService.enforce_rate_limit("upload", user.id, 20, 60)
     await _require_space(db, user, group_name, func_type, namespace, "write")
@@ -174,11 +188,14 @@ async def chunk_upload_init(
     size: Optional[int] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_permission("button:files:upload")),
 ):
+    await RedisService.enforce_rate_limit("chunk-init", user.id, 20, 60)
     await _require_space(db, user, group_name, func_type, namespace, "write")
     return await FileService.init_chunk(
+        db=db,
         group=group_name, func_type=func_type,
-        namespace=namespace, filename=filename, size=size,
+        namespace=namespace, filename=filename, size=size, owner_id=user.id,
     )
 
 
@@ -187,9 +204,11 @@ async def chunk_upload_part(
     upload_id: str = Form(...),
     index: int = Form(...),
     file: UploadFile = File(...),
-    _user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:files:upload")),
 ):
-    return await FileService.save_chunk(upload_id=upload_id, index=index, file=file)
+    await RedisService.enforce_rate_limit("chunk-part", user.id, 240, 60)
+    return await FileService.save_chunk(upload_id=upload_id, index=index, file=file, owner_id=user.id)
 
 
 @router.post("/upload/chunk/complete", response_model=FileAssetOut, summary="分片上传-合并完成")
@@ -202,6 +221,7 @@ async def chunk_upload_complete(
     tags: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:files:upload")),
 ):
     await _require_space(db, user, group_name, func_type, namespace, "write")
     tag_list = [t.strip() for t in tags.split(",")] if tags else None
@@ -238,7 +258,7 @@ async def list_files(
     }
 
 
-@router.get("/tree", summary="分组→功能型→工具→文件 树（按权限隔离）")
+@router.get("/tree", summary="分组→功能型→工具空间聚合树（按权限隔离，不展开全部文件）")
 async def get_tree(
     group_name: Optional[str] = None,
     func_type: Optional[str] = None,
@@ -247,6 +267,50 @@ async def get_tree(
     user: User = Depends(get_current_user),
 ):
     return await FileService.get_tree(db, user, group_name, func_type, namespace)
+
+
+@router.post("/{asset_id}/download-ticket", summary="签发短时下载地址")
+async def create_download_ticket(
+    asset_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    asset = await _get_asset_or_404(db, asset_id)
+    await _require_space(db, user, asset.group_name, asset.func_type, asset.namespace, "read")
+    await FileService.download_meta(db, asset_id)
+    ticket = create_file_download_ticket(asset_id, user.id, user.auth_version or 0)
+    return {"url": f"/api/v1/files/download/{asset_id}?ticket={ticket}", "expires_in": 120}
+
+
+@router.get("/download/{asset_id}", summary="使用短时票据流式下载文件")
+async def download_with_ticket(
+    asset_id: str,
+    ticket: str = Query(..., min_length=20),
+    db: AsyncSession = Depends(get_db),
+):
+    payload = decode_file_download_ticket(ticket, asset_id)
+    if not payload:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "下载地址无效或已过期")
+    user = await db.get(User, payload.get("sub"))
+    if (
+        not user or not user.is_active
+        or payload.get("ver") != (user.auth_version or 0)
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "下载账号无效或已停用")
+    asset = await _get_asset_or_404(db, asset_id)
+    await _require_space(db, user, asset.group_name, asset.func_type, asset.namespace, "read")
+    asset, path = await FileService.download_meta(db, asset_id)
+    try:
+        redeemed = await RedisService.consume_once("file-download", ticket)
+    except Exception as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "下载票据服务暂不可用") from exc
+    if not redeemed:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "下载地址已使用")
+    return FileResponse(
+        path,
+        filename=asset.filename,
+        media_type=asset.mime or "application/octet-stream",
+    )
 
 
 @router.get("/{asset_id}/download", summary="下载文件")
@@ -282,6 +346,7 @@ async def update(
     payload: FileAssetUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:files:upload")),
 ):
     asset = await _get_asset_or_404(db, asset_id)
     # 目标空间与当前空间都需有 write 权限（移动可能跨空间）
@@ -308,11 +373,12 @@ async def delete(
     asset_id: str,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:files:manage")),
 ):
     asset = await _get_asset_or_404(db, asset_id)
     # 删除需要 manage 级别，且仅 owner 或超管
     await _require_space(db, user, asset.group_name, asset.func_type, asset.namespace, "manage")
-    if not FilePermissionService.is_admin(user) and asset.owner_id != user.id:
+    if not await FilePermissionService.is_admin(db, user) and asset.owner_id != user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "无权删除该文件")
     return await FileService.delete(db, asset_id)
 
@@ -329,10 +395,9 @@ async def grant_tool_access(
     role_id: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:permissions:manageUsers")),
 ):
     """授予某用户/角色某工具（及其文件中心 namespace）的访问权限。仅管理员。"""
-    if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="Only admin can grant tool access")
     try:
         g = await ToolGrantService.grant(db, tool_id, user_id=user_id, role_id=role_id, level=level, granted_by=current_user.id)
     except ValueError as e:
@@ -346,10 +411,12 @@ async def revoke_tool_access(
     role_id: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    _: bool = Depends(require_permission("button:permissions:manageUsers")),
 ):
-    if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="Only admin can revoke tool access")
-    ok = await ToolGrantService.revoke(db, tool_id, user_id=user_id, role_id=role_id)
+    try:
+        ok = await ToolGrantService.revoke(db, tool_id, user_id=user_id, role_id=role_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return {"message": "revoked", "ok": ok}
 
 @router.get("/tool-grants")
@@ -359,8 +426,12 @@ async def list_tool_grants(
     current_user: User = Depends(get_current_user),
 ):
     """列出当前用户（或指定用户）通过工具授权可访问的工具/文件空间。"""
-    if user_id and user_id != current_user.id and not current_user.is_superuser:
+    permission_codes = await PermissionService.get_effective_permission_codes(db, current_user)
+    can_inspect_all = "*" in permission_codes or "button:permissions:view" in permission_codes
+    if user_id and user_id != current_user.id and not can_inspect_all:
         raise HTTPException(status_code=403, detail="Only administrators can inspect another user's grants")
+    if can_inspect_all and not user_id:
+        return await ToolGrantService.list_all(db)
     target = user_id or current_user.id
     rows = await ToolGrantService.list_by_user(db, user_id=target)
     return rows

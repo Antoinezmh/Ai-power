@@ -44,7 +44,7 @@ async function doRefreshToken(): Promise<boolean> {
 }
 
 // 单例式刷新：同一时刻只有一个 refresh 请求，其他调用等待其结果
-function refreshTokenOnce(): Promise<boolean> {
+export function refreshAccessToken(): Promise<boolean> {
     if (!refreshPromise) {
         refreshPromise = doRefreshToken().finally(() => {
             refreshPromise = null;
@@ -79,7 +79,7 @@ export async function apiRequest<T>(
     const headers = new Headers(options.headers);
 
     // 设置默认 Content-Type（如果未手动指定）
-    if (!headers.has('Content-Type')) {
+    if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
         headers.set('Content-Type', 'application/json');
     }
 
@@ -99,12 +99,12 @@ export async function apiRequest<T>(
         const isAuthEndpoint =
             endpoint.includes('/auth/login') || endpoint.includes('/auth/refresh');
         if (!isAuthEndpoint) {
-            const refreshed = await refreshTokenOnce();
+            const refreshed = await refreshAccessToken();
             if (refreshed) {
                 // 用新 token 重放原请求
                 const newToken = useAuthStore.getState().accessToken;
                 const retryHeaders = new Headers(options.headers);
-                if (!retryHeaders.has('Content-Type')) {
+                if (!retryHeaders.has('Content-Type') && !(options.body instanceof FormData)) {
                     retryHeaders.set('Content-Type', 'application/json');
                 }
                 if (newToken) {

@@ -9,12 +9,13 @@ export default function ApiKeysForm() {
   const deleteApiKey = useDeleteApiKey();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!newKeyName.trim()) return;
-    await createApiKey.mutateAsync(newKeyName.trim());
+    const created = await createApiKey.mutateAsync(newKeyName.trim());
+    setCreatedKey(created.key || null);
     setNewKeyName('');
-    setIsCreateOpen(false);
     refetch();
   };
 
@@ -64,10 +65,7 @@ export default function ApiKeysForm() {
               <TableRow key={key.id}>
                 <TableCell className="font-medium">{key.name}</TableCell>
                 <TableCell>
-                  <code className="rounded bg-surface-subtle px-2 py-1 text-xs font-mono">{key.key}</code>
-                  <Button variant="ghost" size="icon" className="ml-2 h-6 w-6" onClick={() => copyKey(key.key)}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
+                  <code className="rounded bg-surface-subtle px-2 py-1 text-xs font-mono">{key.prefix}••••••••</code>
                 </TableCell>
                 <TableCell className="text-text-secondary">{key.created_at}</TableCell>
                 <TableCell className="text-text-secondary">{key.last_used || '从未使用'}</TableCell>
@@ -82,25 +80,42 @@ export default function ApiKeysForm() {
         </TableBody>
       </Table>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <Dialog open={isCreateOpen} onOpenChange={(value) => { setIsCreateOpen(value); if (!value) setCreatedKey(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>创建 API 密钥</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <label className="text-sm font-medium text-text-primary">密钥名称</label>
-            <Input
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="例如：生产环境"
-              className="mt-1"
-            />
-          </div>
+          {createdKey ? (
+            <div className="space-y-3 py-4">
+              <p className="text-sm text-text-secondary">该密钥只显示一次，请立即复制并安全保存。</p>
+              <div className="flex items-center gap-2 rounded-lg bg-surface-subtle p-3">
+                <code className="min-w-0 flex-1 break-all text-xs">{createdKey}</code>
+                <Button variant="ghost" size="icon" onClick={() => copyKey(createdKey)}><Copy className="h-4 w-4" /></Button>
+              </div>
+              <p className="text-xs text-text-muted">调用接口时添加请求头：X-API-Key: &lt;此密钥&gt;</p>
+            </div>
+          ) : (
+            <div className="py-4">
+              <label className="text-sm font-medium text-text-primary">密钥名称</label>
+              <Input
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                placeholder="例如：生产环境"
+                className="mt-1"
+              />
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setIsCreateOpen(false)}>取消</Button>
-            <Button onClick={handleCreate} disabled={!newKeyName.trim() || createApiKey.isPending}>
-              {createApiKey.isPending ? '创建中...' : '创建'}
-            </Button>
+            {createdKey ? (
+              <Button onClick={() => { setCreatedKey(null); setIsCreateOpen(false); }}>我已保存</Button>
+            ) : (
+              <>
+                <Button variant="secondary" onClick={() => setIsCreateOpen(false)}>取消</Button>
+                <Button onClick={handleCreate} disabled={!newKeyName.trim() || createApiKey.isPending}>
+                  {createApiKey.isPending ? '创建中...' : '创建'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

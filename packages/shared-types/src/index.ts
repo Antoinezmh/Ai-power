@@ -1,3 +1,2 @@
-export * from './project';
-// 可扩展 user, tool 等export * from './project';
-// 可扩展 user, tool 等
+// Reserved for contracts shared by the web app and future tool SDKs.
+export {};

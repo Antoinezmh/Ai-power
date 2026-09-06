@@ -1,4 +1,3 @@
-from .exec import router as exec_router
 from fastapi import APIRouter
 from .auth import router as auth_router
 from .users import router as users_router
@@ -24,5 +23,4 @@ router.include_router(categories_router)
 router.include_router(favorites_router)
 router.include_router(sso_router)
 router.include_router(files_router)
-router.include_router(exec_router)
 router.include_router(chat_router)

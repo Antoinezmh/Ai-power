@@ -1,30 +1,37 @@
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import Dashboard from '../pages/Dashboard';
-import ToolMarket from '../pages/ToolMarket/index';
-import AIChat from '../pages/AIChat';
-import PermissionManagement from '../pages/PermissionManagement/index';
-import Settings from '../pages/Settings/index';
-import Login from '../pages/Login';
-import Categories from '@/pages/Categories';
-import FileCenter from '@/pages/FileCenter';
-import FilePicker from '@/pages/FilePicker';
 import RouteGuard from '@/components/RouteGuard';
-import Landing from '@/pages/Landing';
-import CapabilityCenter from '@/pages/CapabilityCenter';
+
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const ToolMarket = lazy(() => import('../pages/ToolMarket'));
+const AIChat = lazy(() => import('../pages/AIChat'));
+const PermissionManagement = lazy(() => import('../pages/PermissionManagement'));
+const Settings = lazy(() => import('../pages/Settings'));
+const Login = lazy(() => import('../pages/Login'));
+const Categories = lazy(() => import('@/pages/Categories'));
+const FileCenter = lazy(() => import('@/pages/FileCenter'));
+const FilePicker = lazy(() => import('@/pages/FilePicker'));
+const Landing = lazy(() => import('@/pages/Landing'));
+const CapabilityCenter = lazy(() => import('@/pages/CapabilityCenter'));
 
 export default function AppRouter() {
   return (
-    <Routes>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface text-sm text-text-secondary">正在加载工作台…</div>}>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/files/picker" element={<FilePicker />} />
       <Route path="/" element={<Landing />} />
       <Route element={<MainLayout />}>
         <Route path="dashboard" element={<RouteGuard code="button:dashboard:view"><Dashboard /></RouteGuard>} />
-        <Route path="capabilities/spec" element={<CapabilityCenter moduleId="spec" />} />
-        <Route path="capabilities/model" element={<CapabilityCenter moduleId="model" />} />
-        <Route path="capabilities/test" element={<CapabilityCenter moduleId="test" />} />
-        <Route path="capabilities/reliability" element={<CapabilityCenter moduleId="reliability" />} />
+        <Route path="capabilities/epitaxy" element={<CapabilityCenter moduleId="epitaxy" />} />
+        <Route path="capabilities/process" element={<CapabilityCenter moduleId="process" />} />
+        <Route path="capabilities/design" element={<CapabilityCenter moduleId="design" />} />
+        <Route path="capabilities/validation" element={<CapabilityCenter moduleId="validation" />} />
+        <Route path="capabilities/spec" element={<Navigate replace to="/capabilities/epitaxy" />} />
+        <Route path="capabilities/model" element={<Navigate replace to="/capabilities/design" />} />
+        <Route path="capabilities/test" element={<Navigate replace to="/capabilities/validation" />} />
+        <Route path="capabilities/reliability" element={<Navigate replace to="/capabilities/validation" />} />
         <Route path="files" element={<RouteGuard code="menu:files"><FileCenter /></RouteGuard>} />
         <Route path="tools" element={<RouteGuard code="button:tools:view"><ToolMarket /></RouteGuard>} />
         <Route path="chat" element={<RouteGuard code="menu:chat"><AIChat /></RouteGuard>} />
@@ -32,6 +39,7 @@ export default function AppRouter() {
         <Route path="settings" element={<RouteGuard code="button:settings:view"><Settings /></RouteGuard>} />
         <Route path="categories" element={<RouteGuard code="menu:categories"><Categories /></RouteGuard>} />
       </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }

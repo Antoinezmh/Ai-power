@@ -14,14 +14,17 @@ import {
   Switch,
 } from '@aixsilicon/ui';
 import { Shield, Plus } from 'lucide-react';
-import { useUsers, useRoles, useAssignUserRoles, useCreateUser, useUpdateUser } from '@/features/permissions/hooks/usePermissions';
+import { useAllUsers, useRoles, useAssignUserRoles, useCreateUser, useUpdateUser } from '@/features/permissions/hooks/usePermissions';
 import UserRoleDialog from './components/UserRoleDialog';
 import UserCreateDialog from './components/UserCreateDialog';
 import { User } from '@/features/permissions/api/permissionApi';
 import { message } from '@aixsilicon/ui';
+import { usePermission } from '@/context/PermissionContext';
 
 export default function UserManagement() {
-  const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useUsers();
+  const { hasPermission } = usePermission();
+  const canManage = hasPermission('button:permissions:manageUsers');
+  const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useAllUsers();
   const { data: roles = [] } = useRoles();
   const assignUserRoles = useAssignUserRoles();
   const createUser = useCreateUser();
@@ -67,9 +70,9 @@ export default function UserManagement() {
               />
               <Badge variant="secondary">{users.length} 个用户</Badge>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            {canManage && <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> 新增用户
-            </Button>
+            </Button>}
           </div>
 
           <Table>
@@ -123,6 +126,7 @@ export default function UserManagement() {
                         <Switch
                           checked={user.status === 'active'}
                           onCheckedChange={() => handleToggleStatus(user)}
+                          disabled={!canManage}
                         />
                         <span className="text-sm text-text-secondary">
                           {user.status === 'active' ? '已激活' : '已停用'}
@@ -134,14 +138,14 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
+                        {canManage && <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => { setSelectedUser(user); setIsRoleDialogOpen(true); }}
                           className="h-8 px-3"
                         >
                           <Shield className="mr-1 h-4 w-4" /> 分配角色
-                        </Button>
+                        </Button>}
                       </div>
                     </TableCell>
                   </TableRow>

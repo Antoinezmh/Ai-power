@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class FileAssetBase(BaseModel):
@@ -16,15 +16,26 @@ class FileAssetIn(FileAssetBase):
 
 
 class FileAssetUpdate(BaseModel):
-    filename: Optional[str] = None        # 重命名（物理+DB 同步）
-    group_name: Optional[str] = None      # 移动一级分组
-    func_type: Optional[str] = None       # 移动功能型
-    namespace: Optional[str] = None       # 移动工具空间
-    tags: Optional[List[str]] = None
+    filename: Optional[str] = Field(default=None, min_length=1, max_length=255)  # 重命名（物理+DB 同步）
+    group_name: Optional[str] = Field(default=None, min_length=1, max_length=50)  # 移动一级分组
+    func_type: Optional[str] = Field(default=None, min_length=1, max_length=50)  # 移动功能型
+    namespace: Optional[str] = Field(default=None, min_length=1, max_length=50)  # 移动工具空间
+    tags: Optional[List[str]] = Field(default=None, max_length=20)
     is_archived: Optional[bool] = None
+
+    @field_validator('tags')
+    @classmethod
+    def validate_tags(cls, values):
+        if values is None:
+            return values
+        if any(not value.strip() or len(value.strip()) > 50 for value in values):
+            raise ValueError('每个标签必须为 1-50 个字符')
+        return list(dict.fromkeys(value.strip() for value in values))
 
 
 class FileAssetOut(FileAssetBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     ext: Optional[str] = None
     size: int
@@ -35,10 +46,6 @@ class FileAssetOut(FileAssetBase):
     owner_id: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
 
 class DivisionOut(BaseModel):
     """八组 × 三型 目录结构"""

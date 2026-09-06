@@ -52,7 +52,10 @@ async def create_category(
     current_user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:categories:manage")),
 ):
-    cat = await CategoryService.create(db, data)
+    try:
+        cat = await CategoryService.create(db, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return CategoryResponse(
         id=cat.id, name=cat.name, parent_id=cat.parent_id,
         sort_order=cat.sort_order, created_at=cat.created_at,
@@ -68,7 +71,12 @@ async def update_category(
     current_user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:categories:manage")),
 ):
-    cat = await CategoryService.update(db, category_id, data)
+    try:
+        cat = await CategoryService.update(db, category_id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
     return CategoryResponse(
         id=cat.id, name=cat.name, parent_id=cat.parent_id,
         sort_order=cat.sort_order, created_at=cat.created_at,
@@ -83,5 +91,6 @@ async def delete_category(
     current_user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:categories:manage")),
 ):
-    await CategoryService.delete(db, category_id)
+    if not await CategoryService.delete(db, category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
     return {"message": "Category deleted"}

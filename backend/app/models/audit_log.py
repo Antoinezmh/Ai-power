@@ -1,10 +1,14 @@
-from sqlalchemy import Column, String, Text, DateTime, JSON
+from sqlalchemy import Column, String, Text, DateTime, JSON, Index
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    __table_args__ = (
+        Index("ix_audit_logs_user_action_created_at", "user_id", "action", "created_at"),
+        Index("ix_audit_logs_created_at", "created_at"),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), nullable=True, index=True)

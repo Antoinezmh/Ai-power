@@ -18,13 +18,18 @@ class PermissionService:
         permissions = await PermissionService.get_all_permissions(db)
         by_id = {item.id: item for item in permissions}
         roots = []
+        # SQLAlchemy may return the same identity-mapped objects more than once
+        # in one request. Reset this presentation-only attribute so rebuilding
+        # the tree never duplicates children.
+        for item in permissions:
+            item.children = []
         for item in permissions:
             if item.parent_id and item.parent_id in by_id:
                 parent = by_id[item.parent_id]
-                if not hasattr(parent, 'children'):
-                    parent.children = []
                 parent.children.append(item)
-            elif item.parent_id is None:
+            else:
+                # Keep orphaned records visible to administrators instead of
+                # silently dropping them from the management tree.
                 roots.append(item)
         return roots
 

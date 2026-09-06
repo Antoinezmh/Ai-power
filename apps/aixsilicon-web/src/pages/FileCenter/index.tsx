@@ -52,7 +52,7 @@ import {
     useUpdateFile,
 } from '@/features/files/hooks/useFiles';
 import type { FileGroupNode, FileScopesView } from '@/features/files/api/fileApi';
-import { fileApi, uploadFile } from '@/features/files/api/fileApi';
+import { CHUNK_SIZE, fileApi, uploadChunkedFile, uploadFile } from '@/features/files/api/fileApi';
 import { useToolsInfinite } from '@/features/tools/hooks/useTools';
 
 const LEVEL_RANK: Record<string, number> = { read: 1, write: 2, manage: 3 };
@@ -182,13 +182,22 @@ export default function FileCenter() {
         const progress: Record<string, number> = {};
         try {
             for (const file of upFiles) {
-                // 当前整合后端提供稳定的 multipart 上传接口；原有分片合并服务尚未启用。
-                // 保持逐个上传，避免 SQLite/磁盘同时写入造成失败。
                 progress[file.name] = 1; setUploadProgress({ ...progress });
-                await uploadFile({
+                const uploadData = {
                     file, group_name: upGroup, func_type: upFunc, namespace: upNs.trim(),
                     tags: upTags ? upTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
-                });
+                };
+                if (file.size > CHUNK_SIZE) {
+                    await uploadChunkedFile({
+                        ...uploadData,
+                        onProgress: (percent) => {
+                            progress[file.name] = percent;
+                            setUploadProgress({ ...progress });
+                        },
+                    });
+                } else {
+                    await uploadFile(uploadData);
+                }
                 progress[file.name] = 100; setUploadProgress({ ...progress });
             }
             message.success(`成功上传 ${upFiles.length} 个文件`);

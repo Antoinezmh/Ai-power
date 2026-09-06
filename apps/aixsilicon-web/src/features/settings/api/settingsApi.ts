@@ -10,7 +10,8 @@ export interface Profile {
 export interface ApiKey {
     id: string;
     name: string;
-    key: string;
+    prefix: string;
+    key?: string;
     created_at: string;
     last_used?: string;
 }
@@ -29,7 +30,7 @@ export const settingsApi = {
         api.get<ApiKey[]>('/api/v1/settings/api-keys'),
 
     createApiKey: (name: string) =>
-        api.post<ApiKey>(`/api/v1/settings/api-keys?name=${encodeURIComponent(name)}`),
+        api.post<ApiKey>('/api/v1/settings/api-keys', { name }),
 
     deleteApiKey: (keyId: string) =>
         api.delete(`/api/v1/settings/api-keys/${keyId}`),

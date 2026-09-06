@@ -20,16 +20,22 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toolApi } from '@/features/tools/api/toolsApi';
 import { TOOLS_QUERY_KEY } from '@/features/tools/hooks/useTools';
-import { useUsers, useRoles } from '@/features/permissions/hooks/usePermissions';
+import { useAllUsers, useRoles } from '@/features/permissions/hooks/usePermissions';
 import { SearchableDropdown, SearchableOption } from '@/components/SearchableDropdown';
+import { usePermission } from '@/context/PermissionContext';
 
 interface GrantRow {
+    grant_id: string;
     tool_id: string;
     tool_name: string;
     group_name?: string;
     func_type?: string;
     namespace?: string;
     level: string;
+    user_id?: string;
+    role_id?: string;
+    target_type: 'user' | 'role';
+    target_name?: string;
 }
 
 const LEVEL_HINTS: Record<string, string> = {
@@ -39,15 +45,17 @@ const LEVEL_HINTS: Record<string, string> = {
 };
 
 export default function ToolGrantManagement() {
+    const { hasPermission } = usePermission();
+    const canManage = hasPermission('button:permissions:manageUsers');
     // 全部工具（用于授权下拉选择）
     const { data: tools = [] } = useQuery({
         queryKey: [TOOLS_QUERY_KEY, 'all-grants'],
-        queryFn: () => toolApi.list({ limit: 1000 }),
+        queryFn: toolApi.listAll,
         staleTime: 60 * 1000,
     });
 
     // 用户 / 角色列表（搜索下拉数据源）
-    const { data: users = [] } = useUsers({ limit: 1000 });
+    const { data: users = [] } = useAllUsers();
     const { data: roles = [] } = useRoles();
 
     // 已授权列表
@@ -116,6 +124,8 @@ export default function ToolGrantManagement() {
         if (!window.confirm(`确定撤销对该用户/角色在「${row.tool_name}」上的授权吗？`)) return;
         try {
             const params = new URLSearchParams({ tool_id: row.tool_id });
+            if (row.user_id) params.set('user_id', row.user_id);
+            if (row.role_id) params.set('role_id', row.role_id);
             await api.post(`/api/v1/files/tool-grants/revoke?${params.toString()}`);
             message.success('已撤销授权，对应文件空间权限同步收回');
             refetch();
@@ -127,7 +137,7 @@ export default function ToolGrantManagement() {
     return (
         <div className="space-y-4">
             {/* 授权表单 */}
-            <Card>
+            {canManage && <Card>
                 <CardContent className="p-5">
                     <h3 className="mb-1 font-medium text-text-primary">授权工具（同步开通文件中心空间权限）</h3>
                     <p className="mb-4 text-xs text-text-muted">
@@ -227,7 +237,7 @@ export default function ToolGrantManagement() {
                         <Button variant="ghost" onClick={resetForm}>清空</Button>
                     </div>
                 </CardContent>
-            </Card>
+            </Card>}
 
             {/* 已授权列表 */}
             <Card>
@@ -237,6 +247,7 @@ export default function ToolGrantManagement() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>工具</TableHead>
+                                <TableHead>授权对象</TableHead>
                                 <TableHead>一级分组</TableHead>
                                 <TableHead>功能型</TableHead>
                                 <TableHead>工具空间</TableHead>
@@ -247,14 +258,15 @@ export default function ToolGrantManagement() {
                         <TableBody>
                             {grants.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center text-text-muted py-8">
+                                    <TableCell colSpan={7} className="text-center text-text-muted py-8">
                                         暂无工具授权
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                grants.map((row, i) => (
-                                    <TableRow key={i}>
+                                grants.map((row) => (
+                                    <TableRow key={row.grant_id}>
                                         <TableCell className="font-medium">{row.tool_name}</TableCell>
+                                        <TableCell>{row.target_type === 'role' ? '角色' : '用户'} · {row.target_name || '-'}</TableCell>
                                         <TableCell>{row.group_name || '-'}</TableCell>
                                         <TableCell>{row.func_type || '-'}</TableCell>
                                         <TableCell>{row.namespace || '-'}</TableCell>
@@ -264,9 +276,9 @@ export default function ToolGrantManagement() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="sm" className="text-danger" onClick={() => handleRevoke(row)}>
+                                            {canManage && <Button variant="ghost" size="sm" className="text-danger" onClick={() => handleRevoke(row)}>
                                                 撤销
-                                            </Button>
+                                            </Button>}
                                         </TableCell>
                                     </TableRow>
                                 ))

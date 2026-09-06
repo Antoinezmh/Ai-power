@@ -74,6 +74,16 @@ export const permissionApi = {
         return api.get<User[]>(`/api/v1/users?${query.toString()}`);
     },
 
+    getAllUsers: async () => {
+        const result: User[] = [];
+        const pageSize = 200;
+        for (let skip = 0; ; skip += pageSize) {
+            const page = await api.get<User[]>(`/api/v1/users?skip=${skip}&limit=${pageSize}`);
+            result.push(...page);
+            if (page.length < pageSize) return result;
+        }
+    },
+
     getUser: (id: string) =>
         api.get<User>(`/api/v1/users/${id}`),
 

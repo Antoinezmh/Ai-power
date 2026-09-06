@@ -40,8 +40,9 @@ async def login(
     await db.commit()
     
     roles = await UserService.get_user_roles(db, user.id)
-    access_token = create_access_token(data={"sub": user.id, "roles": roles})
-    refresh_token = create_refresh_token(data={"sub": user.id})
+    token_data = {"sub": user.id, "ver": user.auth_version or 0}
+    access_token = create_access_token(data={**token_data, "roles": roles})
+    refresh_token = create_refresh_token(data=token_data)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -60,11 +61,16 @@ async def refresh(request: RefreshRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
     user_id = payload.get("sub")
     user = await UserService.get_user_by_id(db, user_id)
-    if not user or not user.is_active:
+    if (
+        not user
+        or not user.is_active
+        or payload.get("ver", 0) != (user.auth_version or 0)
+    ):
         raise HTTPException(status_code=401, detail="User inactive")
     roles = await UserService.get_user_roles(db, user.id)
-    new_access = create_access_token(data={"sub": user.id, "roles": roles})
-    new_refresh = create_refresh_token(data={"sub": user.id})
+    token_data = {"sub": user.id, "ver": user.auth_version or 0}
+    new_access = create_access_token(data={**token_data, "roles": roles})
+    new_refresh = create_refresh_token(data=token_data)
     try:
         await RedisService.blacklist_token(request.refresh_token, _token_ttl(payload))
     except Exception as exc:

@@ -180,8 +180,9 @@ export function ToolCard({
               size="default"
               className="flex-1 gap-2"
               onClick={() => onUse?.(tool.id)}
+              disabled={!tool.is_active || tool.status !== 'active'}
             >
-              使用工具
+              {tool.is_active && tool.status === 'active' ? '使用工具' : '当前不可用'}
               <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
             </Button>
           </PermissionGuard>

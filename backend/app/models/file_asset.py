@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, BigInteger, Text, DateTime, Boolean, JSON
+from sqlalchemy import Column, String, Integer, BigInteger, Text, DateTime, Boolean, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
@@ -12,6 +12,13 @@ class FileAsset(Base):
     id 为唯一标识主键（用于接口定位/勾选），与 filename 一一对应。
     """
     __tablename__ = "file_assets"
+    __table_args__ = (
+        UniqueConstraint(
+            "group_name", "func_type", "namespace", "filename",
+            name="uq_file_asset_space_filename",
+        ),
+        UniqueConstraint("storage_path", name="uq_file_asset_storage_path"),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     # 目录三层定位

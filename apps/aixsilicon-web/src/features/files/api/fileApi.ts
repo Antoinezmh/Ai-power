@@ -1,9 +1,9 @@
-import { api } from '@/lib/api';
+import { api, apiRequest, refreshAccessToken } from '@/lib/api';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
 // ---------- 类型定义（与后端 app/schemas/file_asset.py 对齐） ----------
 
-export interface FileDividion {
+export interface FileDivision {
     group_name: string;
     func_types: string[];
 }
@@ -90,9 +90,8 @@ export interface FileScopesView {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-// 上传文件（multipart）：api 封装默认会注入 JSON Content-Type，
-// 对于 FormData 必须让浏览器自动生成带 boundary 的 multipart 头，
-// 因此这里单独用原生 fetch + store token，避免 Content-Type 被错误覆盖。
+// 上传文件（multipart）：统一请求层会保留 FormData，
+// 并让浏览器自动生成带 boundary 的 Content-Type。
 export async function uploadFile(data: {
     file: File;
     group_name: string;
@@ -109,21 +108,14 @@ export async function uploadFile(data: {
     }
     form.append('file', data.file);
 
-    const token = useAuthStore.getState().accessToken;
-    const res = await fetch(`${BASE_URL}/api/v1/files/upload`, {
+    return apiRequest<FileAsset>('/api/v1/files/upload', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    return res.json();
 }
 
 // 单分片上传（XHR，可获得上传进度）
-function uploadChunkPart(uploadId: string, index: number, blob: Blob, onProgress?: (p: number) => void): Promise<void> {
+function uploadChunkPart(uploadId: string, index: number, blob: Blob, onProgress?: (p: number) => void, retried = false): Promise<void> {
     return new Promise((resolve, reject) => {
         const token = useAuthStore.getState().accessToken;
         const form = new FormData();
@@ -136,8 +128,16 @@ function uploadChunkPart(uploadId: string, index: number, blob: Blob, onProgress
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
         };
-        xhr.onload = () => {
+        xhr.onload = async () => {
             if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else if (xhr.status === 401 && !retried && await refreshAccessToken()) {
+                try {
+                    await uploadChunkPart(uploadId, index, blob, onProgress, true);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }
             else {
                 let detail = `HTTP ${xhr.status}`;
                 try { detail = JSON.parse(xhr.responseText).detail || detail; } catch { /* ignore */ }
@@ -150,7 +150,7 @@ function uploadChunkPart(uploadId: string, index: number, blob: Blob, onProgress
 }
 
 // 分片上传完整流程：init -> 逐片上传(带进度) -> complete
-// 小于 CHUNK_SIZE 的文件也走分片流程（统一逻辑），可等比聚合出整文件进度。
+// 大于 CHUNK_SIZE 的文件走分片流程，可等比聚合出整文件进度。
 export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function uploadChunkedFile(data: {
@@ -161,8 +161,6 @@ export async function uploadChunkedFile(data: {
     tags?: string[];
     onProgress?: (percent: number) => void;
 }): Promise<FileAsset> {
-    const token = useAuthStore.getState().accessToken;
-    const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
     const file = data.file;
 
     // 1. 初始化
@@ -172,23 +170,19 @@ export async function uploadChunkedFile(data: {
     initForm.append('namespace', data.namespace);
     initForm.append('filename', file.name);
     initForm.append('size', String(file.size));
-    const initRes = await fetch(`${BASE_URL}/api/v1/files/upload/chunk/init`, {
-        method: 'POST', headers: authHeaders, body: initForm,
+    const init = await apiRequest<{ upload_id: string; chunk_size: number }>('/api/v1/files/upload/chunk/init', {
+        method: 'POST', body: initForm,
     });
-    if (!initRes.ok) {
-        const err = await initRes.json().catch(() => ({}));
-        throw new Error(err.detail || `HTTP ${initRes.status}`);
-    }
-    const init = await initRes.json();
     const uploadId: string = init.upload_id;
+    const chunkSize: number = init.chunk_size || CHUNK_SIZE;
 
     // 2. 切分并逐片上传
     const total = file.size || 1;
-    const chunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+    const chunks = Math.max(1, Math.ceil(file.size / chunkSize));
     let uploaded = 0;
     for (let i = 0; i < chunks; i++) {
-        const start = i * CHUNK_SIZE;
-        const blob = file.slice(start, start + CHUNK_SIZE);
+        const start = i * chunkSize;
+        const blob = file.slice(start, start + chunkSize);
         await uploadChunkPart(uploadId, i, blob, (partP) => {
             const loadedBytes = uploaded + partP * blob.size;
             data.onProgress?.(Math.min(99, (loadedBytes / total) * 100));
@@ -205,19 +199,15 @@ export async function uploadChunkedFile(data: {
     compForm.append('namespace', data.namespace);
     compForm.append('filename', file.name);
     if (data.tags && data.tags.length) compForm.append('tags', data.tags.join(','));
-    const compRes = await fetch(`${BASE_URL}/api/v1/files/upload/chunk/complete`, {
-        method: 'POST', headers: authHeaders, body: compForm,
+    const result = await apiRequest<FileAsset>('/api/v1/files/upload/chunk/complete', {
+        method: 'POST', body: compForm,
     });
-    if (!compRes.ok) {
-        const err = await compRes.json().catch(() => ({}));
-        throw new Error(err.detail || `HTTP ${compRes.status}`);
-    }
     data.onProgress?.(100);
-    return compRes.json();
+    return result;
 }
 
 export const fileApi = {
-    divisions: () => api.get<FileDividion[]>('/api/v1/files/divisions'),
+    divisions: () => api.get<FileDivision[]>('/api/v1/files/divisions'),
     scopes: () => api.get<FileScopesView>('/api/v1/files/scopes'),
     list: (params: {
         group_name?: string;
@@ -247,25 +237,15 @@ export const fileApi = {
         const q = qs.toString();
         return api.get<FileGroupNode[]>(`/api/v1/files/tree${q ? `?${q}` : ''}`);
     },
-    // 下载：用 fetch 拿 blob，前端触发浏览器保存
-    download: async (id: string, filename: string) => {
-        const token = useAuthStore.getState().accessToken;
-        const res = await fetch(`${BASE_URL}/api/v1/files/${id}/download`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || `HTTP ${res.status}`);
-        }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+    // 下载：先获取 2 分钟有效的票据，再交给浏览器原生下载，避免整文件进入 JS 内存。
+    download: async (id: string, _filename: string) => {
+        const ticket = await api.post<{ url: string; expires_in: number }>(`/api/v1/files/${id}/download-ticket`);
+        const base = BASE_URL.replace(/\/$/, '');
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
+        a.href = `${base}${ticket.url}`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(url);
     },
     content: (id: string) => api.get<{ id: string; content: string }>(`/api/v1/files/${id}/content`),
     update: (id: string, data: FileUpdatePayload) =>

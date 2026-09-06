@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Input, Button } from '@aixsilicon/ui';
 import {
     Search,
@@ -21,13 +21,6 @@ import { Tool } from '@/features/tools/api/toolsApi';
 import { api } from '@/lib/api';
 import './market.css';
 
-// 后端 /api/v1/exec/run/{id} 的返回结构
-interface ExecRunResponse {
-    status: string;
-    process_id?: string;
-    url?: string;
-}
-
 const categoryIconMap: Record<string, any> = {
     '器件组': Code2,
     'GaN功率组': BarChart3,
@@ -44,6 +37,7 @@ const GROUP_OPTIONS = ['器件组', 'GaN功率组', '系统与表征组', '外�
 const FUNC_TYPE_OPTIONS = ['数据处理', '报告产出', '原始数据'];
 
 export default function ToolMarket() {
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
@@ -136,45 +130,44 @@ export default function ToolMarket() {
         setDrawerOpen(true);
     };
 
-    // ============================================================
-    // 修改点：增加对 executable 和 streamlit 类型的处理
-    // ============================================================
     const handleUseTool = async (id: string) => {
+        let pendingWindow: Window | null = null;
         try {
             // A recommendation can open a tool that is not in the current
             // paginated grid, so resolve it before dispatching its launch.
             const tool = allTools.find(t => t.id === id)
                 ?? (selectedTool?.id === id ? selectedTool : await api.get<Tool>(`/api/v1/tools/${id}`));
-            // 先记录使用（计数）
-            await useToolMutation.mutateAsync(id);
-
-            if (tool.type === 'static') {
-                window.open(`${window.location.origin}${tool.source}${tool.entry || 'index.html'}`, '_blank');
-            } else if (tool.type === 'external') {
-                window.open(tool.source, '_blank');
-            } else if (tool.type === 'executable') {
-                // 调用后端启动可执行程序
-                const response = await api.post<ExecRunResponse>(`/api/v1/exec/run/${tool.id}`);
-                if (response.status === 'started') {
-                    message.success(`工具「${tool.name}」已启动（进程ID: ${response.process_id}）`);
-                    // 可选：可添加轮询状态查询
-                } else {
-                    message.error('启动失败');
-                }
-            } else if (tool.type === 'streamlit') {
-                // 优先使用 tool.source，否则使用默认的 /streamlit/{id}/ 路径
-                const url = tool.source || `/streamlit/${tool.id}/`;
-                window.open(url, '_blank');
-            } else {
-                // internal: 跳转内部路由（需配合路由配置）
-                // 这里假设 tool.source 是内部路由路径
-                if (tool.source) {
-                    window.location.href = tool.source;
-                } else {
-                    message.info('内部工具，请使用对应功能页面');
-                }
+            if (!tool.is_active || tool.status !== 'active') {
+                throw new Error('工具当前不可用');
             }
+            if (!tool.source) {
+                throw new Error('工具尚未配置访问地址');
+            }
+
+            if (tool.type === 'executable') {
+                throw new Error('服务器可执行工具运行器尚未启用');
+            }
+
+            if (tool.type !== 'internal') {
+                pendingWindow = window.open('about:blank', '_blank');
+                if (!pendingWindow) {
+                    throw new Error('浏览器阻止了新窗口，请允许本站弹出窗口后重试');
+                }
+                pendingWindow.opener = null;
+            }
+
+            const launch = await api.post<{ url: string; ticket_required: boolean }>(`/api/v1/tools/${id}/launch`);
+            if (tool.type === 'internal') {
+                navigate(launch.url);
+            } else {
+                pendingWindow!.location.replace(new URL(launch.url, window.location.origin).toString());
+                pendingWindow = null;
+            }
+
+            // 计数失败不应中断已经通过鉴权的工具启动。
+            useToolMutation.mutateAsync(id).catch(() => message.warning('工具已打开，但使用次数记录失败'));
         } catch (error) {
+            pendingWindow?.close();
             message.error('操作失败：' + (error as Error).message);
         }
     };

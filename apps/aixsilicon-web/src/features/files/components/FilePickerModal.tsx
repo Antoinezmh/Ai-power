@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, message } from '@aixsilicon/ui';
 import { FileText } from 'lucide-react';
 import type { FileAsset } from '../api/fileApi';
@@ -27,6 +27,7 @@ export function FilePickerModal({
     options?: FilePickerModalOptions;
 }) {
     const [loading, setLoading] = useState(false);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const params = new URLSearchParams();
     if (options?.group) params.set('group', options.group);
@@ -38,6 +39,7 @@ export function FilePickerModal({
     const src = `/files/picker${query ? `?${query}` : ''}`;
 
     const handleMessage = useCallback((event: MessageEvent) => {
+        if (event.origin !== window.location.origin || event.source !== iframeRef.current?.contentWindow) return;
         if (!event.data || typeof event.data !== 'object') return;
         if (event.data.type === 'FILE_PICKER_RESULT') {
             const files: FileAsset[] = event.data.files || [];
@@ -71,6 +73,7 @@ export function FilePickerModal({
                 </DialogHeader>
                 <div className="relative h-[60vh] flex-1 overflow-hidden">
                     <iframe
+                        ref={iframeRef}
                         src={src}
                         title="文件选择器"
                         className="h-full w-full border-0"

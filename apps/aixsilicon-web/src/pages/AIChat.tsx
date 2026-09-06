@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, BookOpen, Check, ChevronRight, Copy, Loader2, RotateCcw, Send, Settings2, Sparkles, Wrench } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@aixsilicon/ui';
@@ -35,6 +35,8 @@ export default function AIChat() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const chatSessionId = useAuthStore((state) => state.chatSessionId);
+  const ensureChatSessionId = useAuthStore((state) => state.ensureChatSessionId);
   const [messages, setMessages] = useState<Message[]>([welcome]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,12 +46,42 @@ export default function AIChat() {
   const [configLoading, setConfigLoading] = useState(false);
   const [configError, setConfigError] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [historyReady, setHistoryReady] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
-  const isPlatformAdmin = Boolean(user?.is_superuser);
+  const sessionStorageKey = useMemo(() => user && chatSessionId ? `ai-power-chat:${user.id}:${chatSessionId}` : null, [chatSessionId, user]);
 
   useEffect(() => {
     chatApi.getStatus().then(setStatus).catch(() => setStatus(null));
   }, []);
+
+  useEffect(() => {
+    ensureChatSessionId();
+  }, [ensureChatSessionId]);
+
+  useEffect(() => {
+    setHistoryReady(false);
+    if (!sessionStorageKey) return;
+    try {
+      const cached = sessionStorage.getItem(sessionStorageKey);
+      const restored = cached ? JSON.parse(cached) : null;
+      if (Array.isArray(restored?.messages) && restored.messages.every((item: Message) => item && typeof item.id === 'string' && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string')) {
+        setMessages(restored.messages.slice(-40));
+      } else {
+        setMessages([welcome]);
+      }
+      if (typeof restored?.input === 'string') setInput(restored.input.slice(0, 8000));
+    } catch {
+      setMessages([welcome]);
+    } finally {
+      setHistoryReady(true);
+    }
+  }, [sessionStorageKey]);
+
+  useEffect(() => {
+    if (!historyReady || !sessionStorageKey || loading) return;
+    const compact = messages.slice(-40);
+    sessionStorage.setItem(sessionStorageKey, JSON.stringify({ messages: compact, input: input.slice(0, 8000) }));
+  }, [historyReady, input, loading, messages, sessionStorageKey]);
 
   useEffect(() => {
     const prompt = searchParams.get('prompt');
@@ -62,12 +94,11 @@ export default function AIChat() {
   }, [messages, loading]);
 
   const openConfig = async () => {
-    if (!isPlatformAdmin) return;
     setConfigOpen(true);
     setConfigError('');
     setConfigLoading(true);
     try {
-      setConfig(await chatApi.getConfig());
+      setConfig(await chatApi.getPersonalConfig());
     } catch (error) {
       setConfigError(error instanceof Error ? error.message : '无法读取 Agent 配置');
     } finally {
@@ -82,7 +113,11 @@ export default function AIChat() {
     setInput('');
     setLoading(true);
     try {
-      const result = await chatApi.send(message);
+      const history = messages
+        .filter((item) => item.id !== 'welcome' && !item.failedPrompt)
+        .slice(-12)
+        .map((item) => ({ role: item.role, content: item.content.slice(0, 4000) }));
+      const result = await chatApi.send(message, history);
       const parsed = parseThinking(result.reply);
       setMessages((current) => [...current, {
         id: `a-${crypto.randomUUID()}`,
@@ -92,7 +127,7 @@ export default function AIChat() {
         sources: result.sources,
         mode: result.mode,
       }]);
-      setStatus({ connected: result.mode === 'agent', mode: result.mode });
+      chatApi.getStatus().then(setStatus).catch(() => setStatus({ connected: result.mode === 'agent', mode: result.mode, source: result.mode === 'agent' ? 'platform' : 'catalog' }));
     } catch (error) {
       setMessages((current) => [...current, {
         id: `e-${crypto.randomUUID()}`,
@@ -110,7 +145,7 @@ export default function AIChat() {
     setConfigLoading(true);
     setConfigError('');
     try {
-      const saved = await chatApi.saveConfig({
+      const saved = await chatApi.savePersonalConfig({
         provider: config.provider,
         model: config.model,
         base_url: config.base_url,
@@ -118,7 +153,7 @@ export default function AIChat() {
         ...(apiKey ? { api_key: apiKey } : {}),
       });
       setConfig(saved);
-      setStatus({ connected: saved.enabled && saved.key_configured, mode: saved.enabled && saved.key_configured ? 'agent' : 'catalog' });
+      setStatus({ connected: saved.enabled && saved.key_configured, mode: saved.enabled && saved.key_configured ? 'agent' : 'catalog', source: saved.enabled && saved.key_configured ? 'personal' : 'catalog' });
       setApiKey('');
       setConfigOpen(false);
     } catch (error) {
@@ -128,7 +163,7 @@ export default function AIChat() {
     }
   };
 
-  const statusLabel = status === null ? '正在检测 Agent' : status.connected ? 'Agent 已连接' : '工具推荐模式';
+  const statusLabel = status === null ? '正在检测 Agent' : status.connected ? status.source === 'personal' ? '使用个人 Key' : '使用平台 Key' : '工具推荐模式';
 
   return (
     <div className="agent-page">
@@ -141,7 +176,7 @@ export default function AIChat() {
         <div className="agent-status">
           <span className={`agent-status-dot ${status?.connected ? 'is-connected' : ''}`} />
           {statusLabel}
-          {isPlatformAdmin && <button onClick={openConfig}><Settings2 size={15} />配置</button>}
+          <button onClick={openConfig}><Settings2 size={15} />我的 Key</button>
         </div>
       </section>
 
@@ -232,5 +267,5 @@ function MessageBubble({ message, onOpenTool, onRetry }: { message: Message; onO
 }
 
 function AgentConfigPanel({ config, loading, error, apiKey, onClose, onChange, onKeyChange, onSave }: { config: AgentConfig | null; loading: boolean; error: string; apiKey: string; onClose: () => void; onChange: (config: AgentConfig) => void; onKeyChange: (key: string) => void; onSave: () => void }) {
-  return <div className="agent-config-backdrop" role="dialog" aria-modal="true" aria-label="Agent 连接配置"><section className="agent-config-panel"><div className="agent-config-title"><div><span>PLATFORM ADMIN</span><h2>Agent 连接配置</h2></div><button onClick={onClose}>关闭</button></div>{loading && !config ? <div className="agent-config-loading"><Loader2 className="animate-spin" /> 正在读取配置…</div> : config ? <div className="agent-config-form"><label>模型<input value={config.model} onChange={(event) => onChange({ ...config, model: event.target.value })} placeholder="例如 gpt-4o-mini" /></label><label>兼容接口地址<input value={config.base_url} onChange={(event) => onChange({ ...config, base_url: event.target.value })} placeholder="https://api.openai.com/v1" /></label><label>API Key <small>{config.key_configured ? '已配置；留空保持不变' : '仅加密保存于服务端'}</small><input type="password" value={apiKey} onChange={(event) => onKeyChange(event.target.value)} placeholder={config.key_configured ? '••••••••' : '输入 API Key'} /></label><label className="agent-config-switch"><input type="checkbox" checked={config.enabled} onChange={(event) => onChange({ ...config, enabled: event.target.checked })} />启用真实 Agent</label>{error && <p className="agent-config-error">{error}</p>}<button className="agent-config-save" onClick={onSave} disabled={loading || (config.enabled && !config.key_configured && !apiKey)}>{loading ? '保存中…' : <><Check size={16} />保存配置</>}</button></div> : <p className="agent-config-error">{error || '配置暂时不可用'}</p>}</section></div>;
+  return <div className="agent-config-backdrop" role="dialog" aria-modal="true" aria-label="个人 Agent 连接配置"><section className="agent-config-panel"><div className="agent-config-title"><div><span>PERSONAL AGENT</span><h2>我的模型连接</h2></div><button onClick={onClose}>关闭</button></div>{loading && !config ? <div className="agent-config-loading"><Loader2 className="animate-spin" /> 正在读取配置…</div> : config ? <div className="agent-config-form"><p className="text-xs leading-5 text-text-secondary">此 Key 仅用于当前账号，服务端加密保存；未启用时将自动使用平台通用模型。</p><label>模型<input value={config.model} onChange={(event) => onChange({ ...config, model: event.target.value })} placeholder="例如 gpt-4o-mini" /></label><label>兼容接口基址 <small>可填 /v1 基址或完整 /chat/completions 地址</small><input value={config.base_url} onChange={(event) => onChange({ ...config, base_url: event.target.value })} placeholder="https://api.openai.com/v1" /></label><label>个人 API Key <small>{config.key_configured ? '已配置；留空保持不变' : '仅加密保存于服务端'}</small><input type="password" value={apiKey} onChange={(event) => onKeyChange(event.target.value)} placeholder={config.key_configured ? '••••••••' : '输入个人 API Key'} /></label><label className="agent-config-switch"><input type="checkbox" checked={config.enabled} onChange={(event) => onChange({ ...config, enabled: event.target.checked })} />优先使用我的 Key</label>{error && <p className="agent-config-error">{error}</p>}<button className="agent-config-save" onClick={onSave} disabled={loading || (config.enabled && !config.key_configured && !apiKey)}>{loading ? '保存中…' : <><Check size={16} />保存个人配置</>}</button></div> : <p className="agent-config-error">{error || '配置暂时不可用'}</p>}</section></div>;
 }

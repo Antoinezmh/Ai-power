@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Input, Button, Textarea, Avatar, AvatarFallback } from '@aixsilicon/ui';
 import { PermissionGuard } from '@/components/PermissionGuard';
 import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
@@ -10,6 +10,13 @@ export default function ProfileForm({ profile }: { profile?: Profile }) {
   const [email, setEmail] = useState(profile?.email || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    setNickname(profile.nickname || '');
+    setEmail(profile.email || '');
+    setBio(profile.bio || '');
+  }, [profile]);
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -34,7 +41,7 @@ export default function ProfileForm({ profile }: { profile?: Profile }) {
         <Avatar className="h-16 w-16">
           <AvatarFallback className="text-2xl">{nickname.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
-        <Button variant="secondary" size="sm">更换头像</Button>
+        <span className="text-xs text-text-muted">头像上传暂未开放</span>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

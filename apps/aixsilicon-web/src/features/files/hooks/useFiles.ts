@@ -3,7 +3,7 @@ import {
     fileApi,
     uploadFile,
     FileAsset,
-    FileDividion,
+    FileDivision,
     FileUpdatePayload,
     FileScopesView,
 } from '../api/fileApi';
@@ -24,7 +24,7 @@ export interface FileListParams {
 
 // 八组 × 三型 目录结构
 export function useFileDivisions() {
-    return useQuery<FileDividion[]>({
+    return useQuery<FileDivision[]>({
         queryKey: [FILE_DIVISIONS_QUERY_KEY],
         queryFn: fileApi.divisions,
         staleTime: 30 * 60 * 1000,

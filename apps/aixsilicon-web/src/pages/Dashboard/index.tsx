@@ -18,10 +18,10 @@ import { useDashboardStats } from '@/features/dashboard/hooks/useDashboard';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
 const capabilityModules = [
-    { index: '01', eyebrow: 'SPEC', title: '规格', description: '从客户需求到参数表、FoM 与热阻估算。', icon: Gauge, accent: 'bg-[#e8f1ff] text-[#1769d1]', href: '/capabilities/spec' },
-    { index: '02', eyebrow: 'MODEL', title: '建模', description: 'TCAD 参数校准、子电路提取与 corner 分析。', icon: CircuitBoard, accent: 'bg-[#f0edff] text-[#6750c8]', href: '/capabilities/model' },
-    { index: '03', eyebrow: 'TEST', title: '测试', description: 'SOA、双脉冲损耗、热阻拟合与 binning。', icon: TestTube2, accent: 'bg-[#e8f8f4] text-[#16846b]', href: '/capabilities/test' },
-    { index: '04', eyebrow: 'RELIABILITY', title: '可靠性', description: 'HTOL 监测、寿命预测与样本预警。', icon: Activity, accent: 'bg-[#fff3e5] text-[#be6515]', href: '/capabilities/reliability' },
+    { index: '01', eyebrow: 'EPITAXY', title: '外延', description: '外延结构、掺杂窗口与来料均匀性分析。', icon: Gauge, accent: 'bg-[#e8f1ff] text-[#1769d1]', href: '/capabilities/epitaxy' },
+    { index: '02', eyebrow: 'PROCESS', title: '工艺', description: '流程控制、关键参数窗口与过程异常追溯。', icon: TestTube2, accent: 'bg-[#f0edff] text-[#6750c8]', href: '/capabilities/process' },
+    { index: '03', eyebrow: 'DESIGN', title: '设计', description: '器件结构、TCAD、版图与 SPICE 协同。', icon: CircuitBoard, accent: 'bg-[#e8f8f4] text-[#16846b]', href: '/capabilities/design' },
+    { index: '04', eyebrow: 'VALIDATION', title: '验证', description: '电性、动态、可靠性与失效分析闭环。', icon: Activity, accent: 'bg-[#fff3e5] text-[#be6515]', href: '/capabilities/validation' },
 ];
 
 export default function Dashboard() {
@@ -40,7 +40,7 @@ export default function Dashboard() {
                     <div>
                         <p className="text-xs font-semibold tracking-[0.18em] text-primary-600 dark:text-primary-400">AI POWER / WORKSPACE</p>
                         <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-text-primary sm:text-5xl">继续推进你的研发工作，{displayName}</h1>
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">从规格定义到可靠性验证，工具、数据与 AI 助手都在同一个工作台中连续协作。</p>
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">围绕外延、工艺、设计、验证四条业务流，工具、数据与 AI 助手连续协作。</p>
                         <div className="mt-7 flex flex-wrap gap-3">
                             <Button onClick={openToolMarket} className="rounded-full px-5">浏览工具市场 <ArrowRight className="ml-2 h-4 w-4" /></Button>
                             <Button variant="secondary" onClick={() => navigate('/files')} className="rounded-full px-5">打开文件中心</Button>
@@ -56,7 +56,7 @@ export default function Dashboard() {
             </section>
 
             <section>
-                <div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">CAPABILITIES</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">四个能力模块</h2></div><button onClick={openToolMarket} className="hidden items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 sm:flex">查看全部工具 <ChevronRight className="h-4 w-4" /></button></div>
+                <div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">BUSINESS FLOWS</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">四条核心业务流</h2></div><button onClick={openToolMarket} className="hidden items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 sm:flex">查看全部工具 <ChevronRight className="h-4 w-4" /></button></div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {capabilityModules.map((module) => {
                         const Icon = module.icon;
@@ -73,7 +73,7 @@ export default function Dashboard() {
                 <div className="rounded-[1.5rem] border border-border-default bg-surface-elevated p-6 sm:p-7">
                     <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">CONTINUE WORKING</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">{hasActivity ? '近期工作上下文' : '从一个工具开始'}</h2></div><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-subtle text-text-secondary"><Wrench className="h-5 w-5" /></span></div>
                     {isLoading ? <div className="mt-7 h-32 animate-pulse rounded-2xl bg-surface-subtle" /> : error ? <div className="mt-7 rounded-2xl bg-danger-bg px-4 py-5 text-sm text-danger">统计服务暂不可用，但工具与文件中心仍可正常使用。</div> : hasActivity ? <div className="mt-6 divide-y divide-border-subtle">
-                        {stats?.recent_tools.slice(0, 3).map((tool) => <button key={tool.id} onClick={openToolMarket} className="group flex w-full items-center gap-4 py-4 text-left first:pt-0 last:pb-0"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-lg">{tool.icon || '◫'}</span><span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-primary">{tool.name}</span><span className="mt-1 block truncate text-sm text-text-secondary">{tool.description || '继续查看工具工作区'}</span></span><span className="hidden text-xs text-text-tertiary sm:block">{tool.time}</span><ChevronRight className="h-4 w-4 text-text-tertiary transition-transform group-hover:translate-x-1" /></button>)}
+                        {stats?.recent_tools.slice(0, 3).map((tool) => <button key={tool.id} onClick={() => navigate(`/tools?tool=${encodeURIComponent(tool.id)}`)} className="group flex w-full items-center gap-4 py-4 text-left first:pt-0 last:pb-0"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-subtle text-lg">{tool.icon || '◫'}</span><span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-primary">{tool.name}</span><span className="mt-1 block truncate text-sm text-text-secondary">{tool.description || '继续查看工具工作区'}</span></span><span className="hidden text-xs text-text-tertiary sm:block">{tool.time ? new Date(tool.time).toLocaleDateString() : ''}</span><ChevronRight className="h-4 w-4 text-text-tertiary transition-transform group-hover:translate-x-1" /></button>)}
                     </div> : <div className="mt-7 rounded-2xl bg-surface-subtle p-5 sm:flex sm:items-center sm:justify-between sm:gap-6"><div><p className="font-medium text-text-primary">工具已经就绪，等待你的第一项任务。</p><p className="mt-1 text-sm leading-6 text-text-secondary">从 FoM 估算、SOA 绘制或 HTOL 监测开始，使用记录会在这里连续沉淀。</p></div><Button variant="secondary" onClick={openToolMarket} className="mt-4 shrink-0 rounded-full sm:mt-0">选择工具</Button></div>}
                 </div>
                 <div className="rounded-[1.5rem] border border-border-default bg-surface-elevated p-6 sm:p-7">

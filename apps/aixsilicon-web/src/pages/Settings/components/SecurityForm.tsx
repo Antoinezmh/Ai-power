@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Input, Button, Switch } from '@aixsilicon/ui';
+import { Input, Button } from '@aixsilicon/ui';
 import { PermissionGuard } from '@/components/PermissionGuard';
 import { useChangePassword } from '@/features/settings/hooks/useSettings';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useNavigate } from 'react-router-dom';
 
 export default function SecurityForm() {
   const changePassword = useChangePassword();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const navigate = useNavigate();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [twoFactor, setTwoFactor] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePasswordChange = async () => {
@@ -17,7 +20,9 @@ export default function SecurityForm() {
       await changePassword.mutateAsync({ oldPassword, newPassword });
       setOldPassword('');
       setNewPassword('');
-      alert('密码修改成功');
+      alert('密码修改成功，请使用新密码重新登录');
+      clearAuth();
+      navigate('/login', { replace: true });
     } catch (error) {
       alert('修改失败：' + (error as Error).message);
     } finally {
@@ -50,22 +55,13 @@ export default function SecurityForm() {
             onChange={(e) => setNewPassword(e.target.value)}
             className="mt-1"
           />
+          <p className="mt-1 text-xs text-text-muted">至少 12 个字符</p>
         </div>
         <PermissionGuard code="button:settings:edit">
           <Button onClick={handlePasswordChange} disabled={isLoading || changePassword.isPending}>
             {isLoading || changePassword.isPending ? '修改中...' : '修改密码'}
           </Button>
         </PermissionGuard>
-      </div>
-
-      <div className="border-t border-border-default pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-text-primary">两步验证</p>
-            <p className="text-sm text-text-secondary">开启后登录需要输入动态验证码</p>
-          </div>
-          <Switch checked={twoFactor} onCheckedChange={setTwoFactor} />
-        </div>
       </div>
     </div>
   );

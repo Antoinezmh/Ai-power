@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
@@ -11,12 +11,16 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=True)
+    bio = Column(Text, nullable=True)
     avatar = Column(String(255), nullable=True)
     
     # 统一使用 status 字段 (active / inactive)
     status = Column(String(20), default="active", nullable=False)
     # 保留 is_active 用于向后兼容，但后续可移除
     is_active = Column(Boolean, default=True, nullable=False)
+    # Incrementing this value invalidates all previously issued bearer and
+    # refresh tokens without depending on Redis availability.
+    auth_version = Column(Integer, default=0, nullable=False)
     
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

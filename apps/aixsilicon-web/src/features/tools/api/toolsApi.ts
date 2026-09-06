@@ -4,22 +4,18 @@ export interface Tool {
     id: string;
     name: string;
     description: string;
-    category_id: string;
+    category_id?: string;
     tags: string[];
     owner: string;
     usage_count: number;
     icon: string;
     rating: number;
     is_active: boolean;
+    is_public: boolean;
     status: 'active' | 'inactive' | 'deprecated';
-    type: 'internal' | 'static' | 'external' | 'executable' | 'streamlit';  // 扩展联合类型
+    type: 'internal' | 'static' | 'external' | 'executable' | 'streamlit';
     source: string;
     entry?: string;
-    // 新增可执行程序字段
-    executable_path?: string;
-    executable_args?: any;
-    executable_working_dir?: string;
-    streamlit_port?: number;
     // 文件中心分类字段
     group_name?: string;
     func_type?: string;
@@ -56,6 +52,16 @@ export const toolApi = {
         if (params.func_type) query.append('func_type', params.func_type);
         if (params.namespace) query.append('namespace', params.namespace);
         return api.get<Tool[]>(`/api/v1/tools?${query.toString()}`);
+    },
+
+    listAll: async () => {
+        const result: Tool[] = [];
+        const pageSize = 200;
+        for (let skip = 0; ; skip += pageSize) {
+            const page = await api.get<Tool[]>(`/api/v1/tools?skip=${skip}&limit=${pageSize}`);
+            result.push(...page);
+            if (page.length < pageSize) return result;
+        }
     },
 
     // 获取分类及数量（后端新增接口）

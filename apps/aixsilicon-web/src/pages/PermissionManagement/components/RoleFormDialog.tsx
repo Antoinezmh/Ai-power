@@ -8,6 +8,7 @@ import {
   Input,
   Textarea,
   Button,
+  Checkbox,
 } from '@aixsilicon/ui';
 import { Role } from '@/features/permissions/api/permissionApi';
 
@@ -22,20 +23,23 @@ interface Props {
 export default function RoleFormDialog({ open, onOpenChange, role, onSubmit, isLoading }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isDefault, setIsDefault] = useState(false);
 
   useEffect(() => {
     if (role) {
       setName(role.name);
       setDescription(role.description || '');
+      setIsDefault(Boolean(role.is_default));
     } else {
       setName('');
       setDescription('');
+      setIsDefault(false);
     }
   }, [role, open]);
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), description: description.trim() || undefined });
+    onSubmit({ name: name.trim(), description: description.trim() || undefined, is_default: isDefault });
   };
 
   return (
@@ -54,6 +58,18 @@ export default function RoleFormDialog({ open, onOpenChange, role, onSubmit, isL
               className="mt-1"
             />
           </div>
+          <label className="flex items-start gap-3 rounded-xl border border-border-subtle p-3">
+            <Checkbox
+              checked={isDefault}
+              disabled={Boolean(role?.is_default)}
+              onCheckedChange={(checked) => setIsDefault(checked === true)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block text-sm font-medium text-text-primary">设为新用户默认角色</span>
+              <span className="mt-0.5 block text-xs leading-5 text-text-secondary">新建账号会自动获得该角色；平台同时只保留一个默认角色。</span>
+            </span>
+          </label>
           <div>
             <label className="text-sm font-medium text-text-primary">描述</label>
             <Textarea
