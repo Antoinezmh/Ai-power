@@ -66,7 +66,7 @@ export default function Landing() {
         <section className="landing-cta landing-reveal"><div className="eyebrow">START</div><h3>准备好了吗</h3><p>{isAuthenticated ? '进入工作台，继续你的研发任务。' : '登录后即可使用工具台、嵌入式小程序与 AI 助手。'}</p><a className="button primary" href={workbenchHref}>{isAuthenticated ? '进入工作台' : '使用部门账号登录'} <ArrowRight size={16} /></a></section>
       </main>
 
-      <footer className="landing-footer"><span>© 2026 Ai Power · 功率器件研发 AI 平台 · 内部使用</span><span>v1.1 · AI × Power</span></footer>
+      <footer className="landing-footer"><span>© 2026 Ai Power · 功率器件研发 AI 平台 · 内部使用</span><span>v1.2 · AI × Power</span></footer>
     </div>
   );
 }
