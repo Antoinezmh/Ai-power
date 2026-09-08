@@ -69,6 +69,7 @@ export default function Dashboard() {
                 </div>
             </section>
 
+            <button onClick={() => navigate('/capabilities/projects')} className="flex w-full items-center gap-5 rounded-2xl border border-border-default bg-surface-elevated p-6 text-left transition-colors hover:bg-surface-subtle"><FolderOpen className="h-7 w-7 shrink-0 text-primary-600"/><span className="flex-1"><span className="block text-xs tracking-widest text-text-tertiary">PROJECT WORKSPACE</span><span className="mt-2 block text-xl font-semibold">项目管理</span><span className="mt-2 block text-sm text-text-secondary">连接外延、工艺、设计与验证，统筹阶段目标、任务协作和交付资料。</span></span><ArrowRight className="h-5 w-5 shrink-0"/></button>
             <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)]">
                 <div className="rounded-[1.5rem] border border-border-default bg-surface-elevated p-6 sm:p-7">
                     <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">CONTINUE WORKING</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">{hasActivity ? '近期工作上下文' : '从一个工具开始'}</h2></div><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-subtle text-text-secondary"><Wrench className="h-5 w-5" /></span></div>

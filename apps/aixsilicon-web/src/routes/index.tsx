@@ -14,6 +14,7 @@ const FileCenter = lazy(() => import('@/pages/FileCenter'));
 const FilePicker = lazy(() => import('@/pages/FilePicker'));
 const Landing = lazy(() => import('@/pages/Landing'));
 const CapabilityCenter = lazy(() => import('@/pages/CapabilityCenter'));
+const ProjectWorkspace = lazy(() => import('@/pages/ProjectWorkspace'));
 
 export default function AppRouter() {
   return (
@@ -28,6 +29,8 @@ export default function AppRouter() {
         <Route path="capabilities/process" element={<CapabilityCenter moduleId="process" />} />
         <Route path="capabilities/design" element={<CapabilityCenter moduleId="design" />} />
         <Route path="capabilities/validation" element={<CapabilityCenter moduleId="validation" />} />
+        <Route path="capabilities/projects" element={<ProjectWorkspace />} />
+        <Route path="projects" element={<Navigate replace to="/capabilities/projects" />} />
         <Route path="capabilities/spec" element={<Navigate replace to="/capabilities/epitaxy" />} />
         <Route path="capabilities/model" element={<Navigate replace to="/capabilities/design" />} />
         <Route path="capabilities/test" element={<Navigate replace to="/capabilities/validation" />} />

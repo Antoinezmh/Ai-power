@@ -27,7 +27,7 @@ logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL, logging.INFO))
 
 app = FastAPI(
     title="AI Silicon Platform API",
-    version="1.2.0",
+    version="1.3.0",
     description="Backend for AI Development Tool Integration Platform",
 )
 app.add_middleware(

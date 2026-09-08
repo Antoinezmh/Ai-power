@@ -53,6 +53,7 @@ export default function Landing() {
           <div className="capability-grid">{capabilities.map(({ icon: Icon, ...item }) => <a className="capability-card" href={item.href} key={item.number}><Icon size={24} strokeWidth={1.5} /><span className="card-number">{item.number}</span><h4>{item.title}</h4><small>{item.en}</small><p>{item.desc}</p><ArrowRight className="card-arrow" size={17} /></a>)}</div>
         </section>
 
+        <section className="landing-section landing-reveal"><div className="section-heading"><div className="eyebrow">PROJECT WORKSPACE</div><h3>把四条业务流，汇成一个项目。</h3><p>统筹里程碑、任务协作与交付资料，让每个阶段的工作连续衔接。</p><a className="text-link" href="/capabilities/projects">进入项目管理 <ArrowRight size={16}/></a></div></section>
         <section id="pipeline" className="landing-section alt landing-reveal">
           <div className="section-heading"><div className="eyebrow">PIPELINE</div><h3>从外延到量产</h3><p>每条业务流挂载工具，每个 Gate 都有明确的准出条件。</p></div>
           <div className="pipeline">{gates.map((gate, index) => <div className="pipeline-item" key={gate}><span>{gate.slice(0, 2)}</span><strong>{gate.slice(3)}</strong>{index < gates.length - 1 && <i>→</i>}</div>)}</div>
@@ -66,7 +67,7 @@ export default function Landing() {
         <section className="landing-cta landing-reveal"><div className="eyebrow">START</div><h3>准备好了吗</h3><p>{isAuthenticated ? '进入工作台，继续你的研发任务。' : '登录后即可使用工具台、嵌入式小程序与 AI 助手。'}</p><a className="button primary" href={workbenchHref}>{isAuthenticated ? '进入工作台' : '使用部门账号登录'} <ArrowRight size={16} /></a></section>
       </main>
 
-      <footer className="landing-footer"><span>© 2026 Ai Power · 功率器件研发 AI 平台 · 内部使用</span><span>v1.2 · AI × Power</span></footer>
+      <footer className="landing-footer"><span>© 2026 Ai Power · 功率器件研发 AI 平台 · 内部使用</span><span>v1.3 · AI × Power</span></footer>
     </div>
   );
 }
