@@ -1,18 +1,14 @@
+import { businessFlows } from '@/features/workflows/catalog';
 import { useEffect, useRef } from 'react';
 import { Brand } from '@/components/Brand';
-import { ArrowRight, Bot, CircuitBoard, FlaskConical, Layers3, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Bot } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import './landing.css';
 import './responsive.css';
 
-const capabilities = [
-  { icon: Layers3, number: '01', title: '外延', en: 'EPITAXY', desc: '外延结构、掺杂窗口与来料均匀性分析。', href: '/capabilities/epitaxy' },
-  { icon: FlaskConical, number: '02', title: '工艺', en: 'PROCESS', desc: '过程控制、热预算与制造窗口协同。', href: '/capabilities/process' },
-  { icon: CircuitBoard, number: '03', title: '设计', en: 'DESIGN', desc: '器件结构、TCAD、版图与模型设计。', href: '/capabilities/design' },
-  { icon: ShieldCheck, number: '04', title: '验证', en: 'VALIDATION', desc: '电性、动态、可靠性与失效分析闭环。', href: '/capabilities/validation' },
-];
+const capabilities = businessFlows.map(flow => ({ ...flow, number: flow.index, desc: flow.intro }));
 
-const gates = ['F1 外延', 'F2 工艺', 'F3 设计', 'F4 验证', 'F5 量产'];
+const gates = businessFlows.map(flow => `F${Number(flow.index)} ${flow.title}`);
 
 export default function Landing() {
   const pageRef = useRef<HTMLDivElement>(null);
@@ -43,19 +39,19 @@ export default function Landing() {
           <div className="eyebrow">AI POWER · POWER DEVICE AI PLATFORM</div>
           <h1>Built for power</h1>
           <h2>为功率器件而生</h2>
-          <p>一个工具台，一个 AI 助手，四条核心业务流。<br /><span>MOSFET · IGBT · SiC · GaN — 从外延到验证</span></p>
+          <p>一个工具台，一个 AI 助手，八条核心业务流。<br /><span>MOSFET · IGBT · SiC · GaN — 从需求到量产</span></p>
           <div className="landing-actions"><a className="button primary" href={workbenchHref}>进入工作台 <ArrowRight size={16} /></a><a className="button secondary" href="#capabilities">了解能力</a></div>
-          <div className="metrics"><div><strong>AI</strong><span>智能助手</span></div><div><strong>4</strong><span>大模块</span></div><div><strong>7</strong><span>研发 Gate</span></div><div><strong>×</strong><span>功率器件</span></div></div>
+          <div className="metrics"><div><strong>AI</strong><span>智能助手</span></div><div><strong>8</strong><span>大模块</span></div><div><strong>8</strong><span>研发 Gate</span></div><div><strong>×</strong><span>功率器件</span></div></div>
         </section>
 
         <section id="capabilities" className="landing-section landing-reveal">
-          <div className="section-heading"><div className="eyebrow">BUSINESS FLOWS</div><h3>四条核心业务流</h3><p>外延、工艺、设计、验证，在同一个平台串联数据、工具和结论。</p></div>
+          <div className="section-heading"><div className="eyebrow">BUSINESS FLOWS</div><h3>八条核心业务流</h3><p>需求、设计、外延、工艺、验证、可靠性、应用、量产，在同一个平台串联数据、工具和结论。</p></div>
           <div className="capability-grid">{capabilities.map(({ icon: Icon, ...item }) => <a className="capability-card" href={item.href} key={item.number}><Icon size={24} strokeWidth={1.5} /><span className="card-number">{item.number}</span><h4>{item.title}</h4><small>{item.en}</small><p>{item.desc}</p><ArrowRight className="card-arrow" size={17} /></a>)}</div>
         </section>
 
-        <section className="landing-section landing-reveal"><div className="section-heading"><div className="eyebrow">PROJECT WORKSPACE</div><h3>把四条业务流，汇成一个项目。</h3><p>统筹里程碑、任务协作与交付资料，让每个阶段的工作连续衔接。</p><a className="text-link" href="/capabilities/projects">进入项目管理 <ArrowRight size={16}/></a></div></section>
+        <section className="landing-section landing-reveal"><div className="section-heading"><div className="eyebrow">PROJECT WORKSPACE</div><h3>把八条业务流，汇成一个项目。</h3><p>统筹里程碑、任务协作与交付资料，让每个阶段的工作连续衔接。</p><a className="text-link" href="/capabilities/projects">进入项目管理 <ArrowRight size={16}/></a></div></section>
         <section id="pipeline" className="landing-section alt landing-reveal">
-          <div className="section-heading"><div className="eyebrow">PIPELINE</div><h3>从外延到量产</h3><p>每条业务流挂载工具，每个 Gate 都有明确的准出条件。</p></div>
+          <div className="section-heading"><div className="eyebrow">PIPELINE</div><h3>从需求到量产</h3><p>每条业务流挂载工具，每个 Gate 都有明确的准出条件。</p></div>
           <div className="pipeline">{gates.map((gate, index) => <div className="pipeline-item" key={gate}><span>{gate.slice(0, 2)}</span><strong>{gate.slice(3)}</strong>{index < gates.length - 1 && <i>→</i>}</div>)}</div>
         </section>
 

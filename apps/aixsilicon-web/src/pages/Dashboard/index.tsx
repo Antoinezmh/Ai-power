@@ -1,28 +1,20 @@
+import { businessFlows } from '@/features/workflows/catalog';
 import { useNavigate } from 'react-router-dom';
 import {
-    Activity,
     ArrowRight,
     Bot,
     Box,
     ChevronRight,
-    CircuitBoard,
     FileUp,
     FolderOpen,
-    Gauge,
     Sparkles,
-    TestTube2,
     Wrench,
 } from 'lucide-react';
 import { Button } from '@aixsilicon/ui';
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboard';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
-const capabilityModules = [
-    { index: '01', eyebrow: 'EPITAXY', title: '外延', description: '外延结构、掺杂窗口与来料均匀性分析。', icon: Gauge, accent: 'bg-[#e8f1ff] text-[#1769d1]', href: '/capabilities/epitaxy' },
-    { index: '02', eyebrow: 'PROCESS', title: '工艺', description: '流程控制、关键参数窗口与过程异常追溯。', icon: TestTube2, accent: 'bg-[#f0edff] text-[#6750c8]', href: '/capabilities/process' },
-    { index: '03', eyebrow: 'DESIGN', title: '设计', description: '器件结构、TCAD、版图与 SPICE 协同。', icon: CircuitBoard, accent: 'bg-[#e8f8f4] text-[#16846b]', href: '/capabilities/design' },
-    { index: '04', eyebrow: 'VALIDATION', title: '验证', description: '电性、动态、可靠性与失效分析闭环。', icon: Activity, accent: 'bg-[#fff3e5] text-[#be6515]', href: '/capabilities/validation' },
-];
+const capabilityModules = businessFlows.map(flow => ({ ...flow, eyebrow: flow.en, description: flow.intro }));
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -40,7 +32,7 @@ export default function Dashboard() {
                     <div>
                         <p className="text-xs font-semibold tracking-[0.18em] text-primary-600 dark:text-primary-400">AI POWER / WORKSPACE</p>
                         <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-text-primary sm:text-5xl">继续推进你的研发工作，{displayName}</h1>
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">围绕外延、工艺、设计、验证四条业务流，工具、数据与 AI 助手连续协作。</p>
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">贯穿需求、设计、外延、工艺、验证、可靠性、应用与量产，工具、数据与 AI 助手连续协作。</p>
                         <div className="mt-7 flex flex-wrap gap-3">
                             <Button onClick={openToolMarket} className="rounded-full px-5">浏览工具市场 <ArrowRight className="ml-2 h-4 w-4" /></Button>
                             <Button variant="secondary" onClick={() => navigate('/files')} className="rounded-full px-5">打开文件中心</Button>
@@ -56,12 +48,12 @@ export default function Dashboard() {
             </section>
 
             <section>
-                <div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">BUSINESS FLOWS</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">四条核心业务流</h2></div><button onClick={openToolMarket} className="hidden items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 sm:flex">查看全部工具 <ChevronRight className="h-4 w-4" /></button></div>
+                <div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">BUSINESS FLOWS</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">八条核心业务流</h2></div><button onClick={openToolMarket} className="hidden items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 sm:flex">查看全部工具 <ChevronRight className="h-4 w-4" /></button></div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {capabilityModules.map((module) => {
                         const Icon = module.icon;
                         return <button key={module.index} type="button" onClick={() => navigate(module.href)} className="group min-h-60 rounded-[1.5rem] border border-border-default bg-surface-elevated p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary-200 hover:shadow-lg dark:hover:border-primary-800">
-                            <div className="flex items-start justify-between"><span className="text-sm font-medium text-text-tertiary">{module.index}</span><span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${module.accent}`}><Icon className="h-5 w-5" /></span></div>
+                            <div className="flex items-start justify-between"><span className="text-sm font-medium text-text-tertiary">{module.index}</span><span className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ color: module.color, background: `color-mix(in srgb, ${module.color} 10%, transparent)` }}><Icon className="h-5 w-5" /></span></div>
                             <p className="mt-10 text-xs font-semibold tracking-[0.14em] text-text-tertiary">{module.eyebrow}</p><h3 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-text-primary">{module.title}</h3><p className="mt-2 text-sm leading-6 text-text-secondary">{module.description}</p>
                             <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary-600 opacity-0 transition-opacity group-hover:opacity-100">进入模块 <ArrowRight className="h-3.5 w-3.5" /></span>
                         </button>;
@@ -69,7 +61,7 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            <button onClick={() => navigate('/capabilities/projects')} className="flex w-full items-center gap-5 rounded-2xl border border-border-default bg-surface-elevated p-6 text-left transition-colors hover:bg-surface-subtle"><FolderOpen className="h-7 w-7 shrink-0 text-primary-600"/><span className="flex-1"><span className="block text-xs tracking-widest text-text-tertiary">PROJECT WORKSPACE</span><span className="mt-2 block text-xl font-semibold">项目管理</span><span className="mt-2 block text-sm text-text-secondary">连接外延、工艺、设计与验证，统筹阶段目标、任务协作和交付资料。</span></span><ArrowRight className="h-5 w-5 shrink-0"/></button>
+            <button onClick={() => navigate('/capabilities/projects')} className="flex w-full items-center gap-5 rounded-2xl border border-border-default bg-surface-elevated p-6 text-left transition-colors hover:bg-surface-subtle"><FolderOpen className="h-7 w-7 shrink-0 text-primary-600"/><span className="flex-1"><span className="block text-xs tracking-widest text-text-tertiary">PROJECT WORKSPACE</span><span className="mt-2 block text-xl font-semibold">项目管理</span><span className="mt-2 block text-sm text-text-secondary">串联需求到量产的八条业务流，统筹阶段目标、任务协作和交付资料。</span></span><ArrowRight className="h-5 w-5 shrink-0"/></button>
             <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)]">
                 <div className="rounded-[1.5rem] border border-border-default bg-surface-elevated p-6 sm:p-7">
                     <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.16em] text-text-tertiary">CONTINUE WORKING</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-text-primary">{hasActivity ? '近期工作上下文' : '从一个工具开始'}</h2></div><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-subtle text-text-secondary"><Wrench className="h-5 w-5" /></span></div>

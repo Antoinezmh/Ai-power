@@ -1,3 +1,4 @@
+import { businessFlows } from '@/features/workflows/catalog';
 import { Navigate, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import MainLayout from '../layouts/MainLayout';
@@ -25,16 +26,12 @@ export default function AppRouter() {
       <Route path="/" element={<Landing />} />
       <Route element={<MainLayout />}>
         <Route path="dashboard" element={<RouteGuard code="button:dashboard:view"><Dashboard /></RouteGuard>} />
-        <Route path="capabilities/epitaxy" element={<CapabilityCenter moduleId="epitaxy" />} />
-        <Route path="capabilities/process" element={<CapabilityCenter moduleId="process" />} />
-        <Route path="capabilities/design" element={<CapabilityCenter moduleId="design" />} />
-        <Route path="capabilities/validation" element={<CapabilityCenter moduleId="validation" />} />
+        {businessFlows.map(flow => <Route key={flow.id} path={`capabilities/${flow.id}`} element={<CapabilityCenter moduleId={flow.id} />} />)}
         <Route path="capabilities/projects" element={<ProjectWorkspace />} />
         <Route path="projects" element={<Navigate replace to="/capabilities/projects" />} />
-        <Route path="capabilities/spec" element={<Navigate replace to="/capabilities/epitaxy" />} />
+        <Route path="capabilities/spec" element={<Navigate replace to="/capabilities/requirements" />} />
         <Route path="capabilities/model" element={<Navigate replace to="/capabilities/design" />} />
         <Route path="capabilities/test" element={<Navigate replace to="/capabilities/validation" />} />
-        <Route path="capabilities/reliability" element={<Navigate replace to="/capabilities/validation" />} />
         <Route path="files" element={<RouteGuard code="menu:files"><FileCenter /></RouteGuard>} />
         <Route path="tools" element={<RouteGuard code="button:tools:view"><ToolMarket /></RouteGuard>} />
         <Route path="chat" element={<RouteGuard code="menu:chat"><AIChat /></RouteGuard>} />

@@ -19,7 +19,7 @@ PERMISSIONS = (
     # name, code, type, parent_code, path, description
     ("工作台", "menu:dashboard", PermissionType.menu, None, "/dashboard", "访问个人工作台"),
     ("查看工作台", "button:dashboard:view", PermissionType.button, "menu:dashboard", None, "查看工作台内容"),
-    ("能力模块", "menu:capabilities", PermissionType.menu, None, None, "访问规格、建模、测试、可靠性模块"),
+    ("能力模块", "menu:capabilities", PermissionType.menu, None, None, "访问需求、设计、外延、工艺、验证、可靠性、应用、量产业务流"),
     ("查看能力模块", "button:capabilities:view", PermissionType.button, "menu:capabilities", None, "查看模块工作区"),
     ("工具市场", "menu:tools", PermissionType.menu, None, "/tools", "浏览部门工具"),
     ("查看工具", "button:tools:view", PermissionType.button, "menu:tools", None, "查看工具定义和说明"),

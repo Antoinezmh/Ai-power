@@ -110,7 +110,7 @@ export default function Login() {
                 <div className="login-aside-inner">
                     <div className="login-eyebrow">AI POWER / ENGINEERING PLATFORM</div>
                     <h2>把工程问题，<br /><em>带进一个工作台。</em></h2>
-                    <p>围绕外延、工艺、设计、验证四条业务流，工具、资料与 AI 助手连续协作。</p>
+                    <p>贯穿需求、设计、外延、工艺、验证、可靠性、应用与量产，工具、资料与 AI 助手连续协作。</p>
                     <div className="login-flow"><FlowItem number="01" label="定义规格" /><FlowItem number="02" label="调用工具" /><FlowItem number="03" label="沉淀结论" /></div>
                     <div className="login-aside-meta"><span><Sparkles size={15} /> AI ASSISTANT</span><span><ShieldCheck size={15} /> 部门级权限隔离</span><span><LockKeyhole size={15} /> 安全工作空间</span></div>
                 </div>
