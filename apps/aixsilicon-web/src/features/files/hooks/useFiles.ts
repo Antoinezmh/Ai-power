@@ -6,11 +6,13 @@ import {
     FileDivision,
     FileUpdatePayload,
     FileScopesView,
+    FileSpace,
 } from '../api/fileApi';
 
 export const FILES_QUERY_KEY = 'files';
 export const FILE_DIVISIONS_QUERY_KEY = 'file-divisions';
 export const FILE_SCOPES_QUERY_KEY = 'file-scopes';
+export const FILE_SPACES_QUERY_KEY = 'file-spaces';
 
 export interface FileListParams {
     group_name?: string;
@@ -40,6 +42,14 @@ export function useFileScopes() {
     });
 }
 
+export function useFileSpaces() {
+    return useQuery<FileSpace[]>({
+        queryKey: [FILE_SPACES_QUERY_KEY],
+        queryFn: fileApi.spaces,
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
 // 文件清单（分页 + 筛选）
 export function useFileList(params: FileListParams) {
     return useQuery({
@@ -61,6 +71,7 @@ function invalidateFiles(queryClient: ReturnType<typeof useQueryClient>) {
     queryClient.invalidateQueries({ queryKey: [FILES_QUERY_KEY] });
     queryClient.invalidateQueries({ queryKey: [FILE_DIVISIONS_QUERY_KEY] });
     queryClient.invalidateQueries({ queryKey: [FILE_SCOPES_QUERY_KEY] });
+    queryClient.invalidateQueries({ queryKey: [FILE_SPACES_QUERY_KEY] });
 }
 
 // 上传

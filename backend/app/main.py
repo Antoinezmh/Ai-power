@@ -20,6 +20,7 @@ from app.models.category import Category
 from app.models.file_permission import FilePermission
 from app.models.audit_log import AuditLog
 from app.services.redis_service import RedisService
+from app.services.file_service import FileService
 from sqlalchemy import delete, func, select, text
 import app.models  # noqa: F401 - register all ORM models before create_all
 
@@ -27,7 +28,7 @@ logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL, logging.INFO))
 
 app = FastAPI(
     title="AI Silicon Platform API",
-    version="1.4.0",
+    version="1.4.1",
     description="Backend for AI Development Tool Integration Platform",
 )
 app.add_middleware(
@@ -193,6 +194,18 @@ async def startup():
                 else:
                     db.add(Tool(name=name, description=description, category_id=category_ids[group_name], group_name=group_name, func_type='数据处理', namespace=namespace, status='active', type='internal', source=source, icon=icon, owner='功率器件研发部', rating=5.0, usage_count=0, is_active=True, is_public=True))
         await db.commit()
+        # Migrations mark existing tools as registered; provision their folders
+        # at startup so read-only RAG mounts do not depend on the first upload.
+        registered_tools = (await db.execute(select(Tool).where(
+            Tool.file_space_enabled.is_(True)
+        ))).scalars().all()
+        for registered_tool in registered_tools:
+            if all((registered_tool.group_name, registered_tool.func_type, registered_tool.namespace)):
+                FileService.provision_space(
+                    registered_tool.group_name,
+                    registered_tool.func_type,
+                    registered_tool.namespace,
+                )
     async with AsyncSessionLocal() as db:
         cutoff = datetime.now(timezone.utc) - timedelta(days=settings.AUDIT_LOG_RETENTION_DAYS)
         result = await db.execute(delete(AuditLog).where(AuditLog.created_at < cutoff))

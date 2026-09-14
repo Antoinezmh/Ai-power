@@ -10,6 +10,7 @@ class ToolBase(BaseModel):
     group_name: Optional[str] = Field(default=None, max_length=50)
     func_type: Optional[str] = Field(default=None, max_length=50)
     namespace: Optional[str] = Field(default=None, max_length=50)
+    file_space_enabled: bool = True
     tags: List[str] = Field(default_factory=list, max_length=20)
     owner: Optional[str] = Field(default=None, max_length=50)
     icon: Optional[str] = Field(default=None, max_length=10)
@@ -76,6 +77,7 @@ class ToolUpdate(BaseModel):
     group_name: Optional[str] = Field(default=None, max_length=50)
     func_type: Optional[str] = Field(default=None, max_length=50)
     namespace: Optional[str] = Field(default=None, max_length=50)
+    file_space_enabled: Optional[bool] = None
     tags: Optional[List[str]] = Field(default=None, max_length=20)
     owner: Optional[str] = Field(default=None, max_length=50)
     icon: Optional[str] = Field(default=None, max_length=10)
@@ -92,7 +94,7 @@ class ToolUpdate(BaseModel):
     _validate_tags = field_validator('tags')(ToolBase.validate_tags.__func__)
     _validate_config_size = field_validator('config')(ToolBase.validate_config_size.__func__)
 
-    @field_validator('type', 'status', 'source', 'group_name', 'func_type', 'namespace', 'is_active', 'is_public')
+    @field_validator('type', 'status', 'source', 'group_name', 'func_type', 'namespace', 'file_space_enabled', 'is_active', 'is_public')
     @classmethod
     def required_updates_cannot_be_null(cls, value):
         if value is None:

@@ -35,6 +35,7 @@ from app.schemas.category import CategoryCreate, CategoryUpdate
 from app.schemas.agent import AgentConfigUpdate
 from app.schemas.user import UserCreate
 from app.api.v1.files import router as files_router
+from app.api.v1.files import _registered_space
 
 
 @pytest.fixture
@@ -235,6 +236,50 @@ async def test_upload_move_delete_stays_consistent(db, tmp_path, monkeypatch):
     await FileService.delete(db, asset.id)
     assert not destination.exists()
     assert await db.get(FileAsset, asset.id) is None
+
+
+@pytest.mark.asyncio
+async def test_registered_tool_space_controls_upload_target(db, tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "FILE_STORAGE_ROOT", str(tmp_path))
+    enabled = Tool(
+        name="RAG", group_name="器件组", func_type="原始数据", namespace="rag-docs",
+        status="active", type="internal", source="/capabilities/rag", is_active=True,
+        file_space_enabled=True,
+    )
+    disabled = Tool(
+        name="No files", group_name="器件组", func_type="数据处理", namespace="no-files",
+        status="active", type="internal", source="/capabilities/no-files", is_active=True,
+        file_space_enabled=False,
+    )
+    db.add_all([enabled, disabled])
+    await db.commit()
+
+    resolved = await _registered_space(db, enabled.id, None, None, None)
+    assert resolved.id == enabled.id
+    with pytest.raises(HTTPException, match="上传目录与工具注册信息不一致"):
+        await _registered_space(db, enabled.id, "外延组", None, None)
+    with pytest.raises(HTTPException, match="未在文件中心注册"):
+        await _registered_space(db, disabled.id, None, None, None)
+
+
+@pytest.mark.asyncio
+async def test_tool_registration_provisions_space_and_protects_nonempty_tool(db, tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "FILE_STORAGE_ROOT", str(tmp_path))
+    tool = await ToolService.create_tool(db, ToolCreate(
+        name="RAG loader", description="loads documents", group_name="器件组",
+        func_type="原始数据", namespace="rag-loader", tags=["RAG"], owner="owner",
+        source="/capabilities/rag-loader", type="internal", file_space_enabled=True,
+    ))
+    assert (tmp_path / "器件组" / "原始数据" / "rag-loader").is_dir()
+
+    db.add(FileAsset(
+        group_name=tool.group_name, func_type=tool.func_type, namespace=tool.namespace,
+        filename="doc.txt", ext=".txt", size=1,
+        storage_path="器件组/原始数据/rag-loader/doc.txt", owner_id=None,
+    ))
+    await db.commit()
+    with pytest.raises(ValueError, match="仍有文件"):
+        await ToolService.delete_tool(db, tool.id)
 
 
 @pytest.mark.asyncio

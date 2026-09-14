@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from app.models.tool import Tool
+from app.models.file_asset import FileAsset
 from app.models.category import Category
 from app.models.tool_grant import ToolGrant
 from app.models.user_role import UserRole
@@ -14,6 +15,7 @@ from app.models.permission import Permission
 from app.repositories.tool_repo import ToolRepository
 from app.core.file_center import is_valid_func_type, is_valid_group
 from app.core.config import settings
+from app.services.file_service import FileService
 
 
 class ToolService:
@@ -137,6 +139,8 @@ class ToolService:
         if values.get('category_id') and not await db.get(Category, values['category_id']):
             raise ValueError('工具分类不存在')
         await ToolService._ensure_proxy_source_available(db, values)
+        if values.get('file_space_enabled', True):
+            FileService.provision_space(values['group_name'], values['func_type'], values['namespace'])
         values['tags'] = json.dumps(values['tags']) if isinstance(values.get('tags'), list) else values.get('tags')
         try:
             return await ToolRepository(db).create(**values)
@@ -154,7 +158,7 @@ class ToolService:
             for key in (
                 'name', 'description', 'category_id', 'group_name', 'func_type',
                 'namespace', 'tags', 'owner', 'icon', 'rating', 'status', 'type',
-                'source', 'config', 'entry', 'is_public',
+                'source', 'config', 'entry', 'is_public', 'file_space_enabled',
             )
         }
         merged.update(update_data)
@@ -162,6 +166,18 @@ class ToolService:
         if validated.get('category_id') and not await db.get(Category, validated['category_id']):
             raise ValueError('工具分类不存在')
         await ToolService._ensure_proxy_source_available(db, validated, tool_id)
+        old_space = (tool.group_name, tool.func_type, tool.namespace)
+        new_space = (validated['group_name'], validated['func_type'], validated['namespace'])
+        if old_space != new_space:
+            has_files = await db.scalar(select(FileAsset.id).where(
+                FileAsset.group_name == tool.group_name,
+                FileAsset.func_type == tool.func_type,
+                FileAsset.namespace == tool.namespace,
+            ).limit(1))
+            if has_files:
+                raise ValueError('该工具空间已有文件，不能直接修改分组或 namespace；请先在文件中心迁移文件')
+        if validated.get('file_space_enabled', True):
+            FileService.provision_space(*new_space)
         normalized_update = {key: validated[key] for key in update_data}
         if isinstance(normalized_update.get('tags'), list):
             normalized_update['tags'] = json.dumps(normalized_update['tags'])
@@ -172,7 +188,18 @@ class ToolService:
             raise ValueError('namespace 已被其他工具使用') from exc
 
     @staticmethod
-    async def delete_tool(db, tool_id): return await ToolRepository(db).delete(tool_id)
+    async def delete_tool(db, tool_id):
+        tool = await ToolRepository(db).get(tool_id)
+        if not tool:
+            return False
+        has_files = await db.scalar(select(FileAsset.id).where(
+            FileAsset.group_name == tool.group_name,
+            FileAsset.func_type == tool.func_type,
+            FileAsset.namespace == tool.namespace,
+        ).limit(1))
+        if has_files:
+            raise ValueError('工具空间仍有文件，不能删除工具；可先停用工具或迁移文件')
+        return await ToolRepository(db).delete(tool_id)
 
     @staticmethod
     async def _ensure_proxy_source_available(db, values: dict[str, Any], tool_id: str | None = None) -> None:

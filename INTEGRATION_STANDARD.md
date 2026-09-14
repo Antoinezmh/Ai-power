@@ -241,6 +241,10 @@ INSERT INTO tools (name, type, source, config) VALUES (
 
 ## 九、文件中心（FileCenter）接入规范（V1.0）
 
+> 当前工具空间注册、上传目标解析和 RAG 挂载约定详见
+> [`docs/统一工具文件空间说明.md`](docs/统一工具文件空间说明.md)。文件上传应优先提交
+> `tool_id`，不得由浏览器或第三方工具指定服务器绝对路径。
+
 > 文件中心是平台统一的通用文件存储，供各业务工具按分组/功能型/工具组织、共享与消费文件。
 > 提供后端 API（`services/aixsilicon-api`，前缀 `/api/v1/files`）与前端选文件器（FilePicker）。
 

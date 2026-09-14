@@ -58,7 +58,7 @@ class FilePermissionService:
                 access_level=grant.level,
             )
             for grant, tool in rows
-            if tool.group_name and tool.func_type and tool.namespace
+            if tool.file_space_enabled and tool.group_name and tool.func_type and tool.namespace
         ]
         return [*direct, *derived]
     @staticmethod

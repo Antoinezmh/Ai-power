@@ -20,6 +20,7 @@ export interface Tool {
     group_name?: string;
     func_type?: string;
     namespace?: string;
+    file_space_enabled: boolean;
     created_at: string;
     updated_at: string;
 }

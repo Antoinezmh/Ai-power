@@ -40,6 +40,14 @@ class FileService:
         return path
 
     @classmethod
+    def provision_space(cls, group: str, func_type: str, namespace: str) -> str:
+        """Create a registered tool directory and return its portable relative path."""
+        namespace = cls._validate(group, func_type, namespace)
+        relative_path = "/".join((group, func_type, namespace))
+        cls._safe_path(relative_path).mkdir(parents=True, exist_ok=True)
+        return relative_path
+
+    @classmethod
     def _chunk_root(cls) -> Path:
         root = cls._root() / ".uploads"
         root.mkdir(parents=True, exist_ok=True)

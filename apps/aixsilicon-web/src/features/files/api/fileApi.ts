@@ -88,18 +88,31 @@ export interface FileScopesView {
     groups: FileScopeGroup[];
 }
 
+export interface FileSpace {
+    tool_id: string;
+    tool_name: string;
+    group_name: string;
+    func_type: string;
+    namespace: string;
+    access_level: 'read' | 'write' | 'manage';
+    relative_path: string;
+    tool_mount_path: string;
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // 上传文件（multipart）：统一请求层会保留 FormData，
 // 并让浏览器自动生成带 boundary 的 Content-Type。
 export async function uploadFile(data: {
     file: File;
+    tool_id: string;
     group_name: string;
     func_type: string;
     namespace: string;
     tags?: string[];
 }): Promise<FileAsset> {
     const form = new FormData();
+    form.append('tool_id', data.tool_id);
     form.append('group_name', data.group_name);
     form.append('func_type', data.func_type);
     form.append('namespace', data.namespace);
@@ -155,6 +168,7 @@ export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function uploadChunkedFile(data: {
     file: File;
+    tool_id: string;
     group_name: string;
     func_type: string;
     namespace: string;
@@ -165,6 +179,7 @@ export async function uploadChunkedFile(data: {
 
     // 1. 初始化
     const initForm = new FormData();
+    initForm.append('tool_id', data.tool_id);
     initForm.append('group_name', data.group_name);
     initForm.append('func_type', data.func_type);
     initForm.append('namespace', data.namespace);
@@ -193,6 +208,7 @@ export async function uploadChunkedFile(data: {
 
     // 3. 合并完成
     const compForm = new FormData();
+    compForm.append('tool_id', data.tool_id);
     compForm.append('upload_id', uploadId);
     compForm.append('group_name', data.group_name);
     compForm.append('func_type', data.func_type);
@@ -209,6 +225,7 @@ export async function uploadChunkedFile(data: {
 export const fileApi = {
     divisions: () => api.get<FileDivision[]>('/api/v1/files/divisions'),
     scopes: () => api.get<FileScopesView>('/api/v1/files/scopes'),
+    spaces: () => api.get<FileSpace[]>('/api/v1/files/spaces'),
     list: (params: {
         group_name?: string;
         func_type?: string;

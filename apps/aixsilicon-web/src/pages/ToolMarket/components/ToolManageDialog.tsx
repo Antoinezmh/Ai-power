@@ -43,6 +43,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
     const [groupName, setGroupName] = useState('');
     const [funcType, setFuncType] = useState('');
     const [namespace, setNamespace] = useState('');
+    const [fileSpaceEnabled, setFileSpaceEnabled] = useState(true);
 
     // 八大一级分组（与后端 file_center.py GROUPS 保持一致）
     const GROUP_OPTIONS = ['器件组', 'GaN功率组', '系统与表征组', '外延组', 'sic开发组', '射频组', '工艺工程组', 'si基研发组'];
@@ -70,6 +71,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             setGroupName(editingTool.group_name || '');
             setFuncType(editingTool.func_type || '');
             setNamespace(editingTool.namespace || '');
+            setFileSpaceEnabled(editingTool.file_space_enabled ?? true);
         } else {
             setName('');
             setDescription('');
@@ -84,6 +86,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             setGroupName('');
             setFuncType('');
             setNamespace('');
+            setFileSpaceEnabled(true);
         }
         setErrors({});
     }, [editingTool, open]);
@@ -165,6 +168,7 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
             group_name: groupName.trim(),
             func_type: funcType.trim(),
             namespace: namespace.trim(),
+            file_space_enabled: fileSpaceEnabled,
             tags: tags.split(',').map(s => s.trim()).filter(Boolean),
             owner: owner.trim(),
             icon: icon.trim(),
@@ -264,6 +268,19 @@ export function ToolManageDialog({ open, onOpenChange, editingTool, onSuccess }:
                             ✍️ 命名规则：使用英文或拼音短名（小写、可用 - 连接，如 device-query、waf-report）；需在平台内唯一。
                         </p>
                     </div>
+
+                    <label className="col-span-2 flex items-start gap-3 rounded-xl border border-border-default p-3">
+                        <input
+                            type="checkbox"
+                            checked={fileSpaceEnabled}
+                            onChange={(event) => setFileSpaceEnabled(event.target.checked)}
+                            className="mt-1"
+                        />
+                        <span>
+                            <span className="block text-sm font-medium text-text-primary">注册到文件中心</span>
+                            <span className="mt-1 block text-xs text-text-muted">启用后自动创建受控目录，并作为文件上传目标；RAG 工具可把该目录挂载为资料入口。</span>
+                        </span>
+                    </label>
 
                     {/* 描述（必填） */}
                     <div className="col-span-2">

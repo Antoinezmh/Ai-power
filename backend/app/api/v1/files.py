@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.database import get_db
 from app.api.deps import get_current_user as get_authenticated_user
@@ -14,6 +15,7 @@ from app.core.file_center import GROUPS, FUNC_TYPES
 from app.models.file_asset import FileAsset
 from app.models.file_permission import FilePermission
 from app.models.user import User
+from app.models.tool import Tool
 from app.services.redis_service import RedisService
 from app.services.permission_service import PermissionService
 from app.core.security import create_file_download_ticket, decode_file_download_ticket
@@ -43,6 +45,35 @@ async def _require_space(db: AsyncSession, user: User, group: str,
             status.HTTP_403_FORBIDDEN,
             f"无权在 「{group}/{func_type}/{namespace}」空间执行该操作（需 {level} 级别）",
         )
+
+
+async def _registered_space(
+    db: AsyncSession,
+    tool_id: Optional[str],
+    group_name: Optional[str],
+    func_type: Optional[str],
+    namespace: Optional[str],
+) -> Tool:
+    """Resolve client input to one server-controlled, registered tool space."""
+    if tool_id:
+        tool = await db.get(Tool, tool_id)
+    elif group_name and func_type and namespace:
+        tool = await db.scalar(select(Tool).where(
+            Tool.group_name == group_name,
+            Tool.func_type == func_type,
+            Tool.namespace == namespace,
+        ))
+    else:
+        tool = None
+    if not tool or not tool.file_space_enabled:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "目标工具未在文件中心注册")
+    expected = (tool.group_name, tool.func_type, tool.namespace)
+    supplied = (group_name, func_type, namespace)
+    if any(value is not None for value in supplied) and any(
+        value is not None and value != target for value, target in zip(supplied, expected)
+    ):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "上传目录与工具注册信息不一致")
+    return tool
 
 
 async def _get_asset_or_404(db: AsyncSession, asset_id: str) -> FileAsset:
@@ -86,6 +117,49 @@ async def my_scopes(
     db: AsyncSession = Depends(get_db),
 ):
     return await FilePermissionService.user_scope_view(db, user, GROUPS, FUNC_TYPES)
+
+
+@router.get("/spaces", summary="当前用户可选择的已注册工具空间")
+async def list_registered_spaces(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    tools = list((await db.execute(
+        select(Tool).where(Tool.file_space_enabled.is_(True)).order_by(Tool.name)
+    )).scalars().all())
+    is_admin = await FilePermissionService.is_admin(db, user)
+    grants = [] if is_admin else await FilePermissionService.list_effective_grants(db, user.id)
+    rank = {"read": 1, "write": 2, "manage": 3}
+    result = []
+    for tool in tools:
+        if not all((tool.group_name, tool.func_type, tool.namespace)):
+            continue
+        if is_admin:
+            access_level = "manage"
+        else:
+            matching = [
+                grant.access_level for grant in grants
+                if all(value is None or value == target for value, target in (
+                    (grant.group_name, tool.group_name),
+                    (grant.func_type, tool.func_type),
+                    (grant.namespace, tool.namespace),
+                ))
+            ]
+            if not matching:
+                continue
+            access_level = max(matching, key=lambda value: rank.get(value, 0))
+        relative_path = "/".join((tool.group_name, tool.func_type, tool.namespace))
+        result.append({
+            "tool_id": tool.id,
+            "tool_name": tool.name,
+            "group_name": tool.group_name,
+            "func_type": tool.func_type,
+            "namespace": tool.namespace,
+            "access_level": access_level,
+            "relative_path": relative_path,
+            "tool_mount_path": f"/data/files/{relative_path}",
+        })
+    return result
 
 
 # ------------------------------------------------------------
@@ -160,15 +234,18 @@ async def revoke_permission(
 @router.post("/upload", response_model=FileAssetOut, summary="上传文件")
 async def upload(
     file: UploadFile = File(...),
-    group_name: str = Form(...),
-    func_type: str = Form(...),
-    namespace: str = Form(...),
+    tool_id: Optional[str] = Form(None),
+    group_name: Optional[str] = Form(None),
+    func_type: Optional[str] = Form(None),
+    namespace: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:files:upload")),
 ):
     await RedisService.enforce_rate_limit("upload", user.id, 20, 60)
+    tool = await _registered_space(db, tool_id, group_name, func_type, namespace)
+    group_name, func_type, namespace = tool.group_name, tool.func_type, tool.namespace
     await _require_space(db, user, group_name, func_type, namespace, "write")
     tag_list = [t.strip() for t in tags.split(",")] if tags else None
     asset = await FileService.upload(
@@ -181,16 +258,19 @@ async def upload(
 
 @router.post("/upload/chunk/init", summary="分片上传-初始化")
 async def chunk_upload_init(
-    group_name: str = Form(...),
-    func_type: str = Form(...),
-    namespace: str = Form(...),
     filename: str = Form(...),
+    tool_id: Optional[str] = Form(None),
+    group_name: Optional[str] = Form(None),
+    func_type: Optional[str] = Form(None),
+    namespace: Optional[str] = Form(None),
     size: Optional[int] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     _: bool = Depends(require_permission("button:files:upload")),
 ):
     await RedisService.enforce_rate_limit("chunk-init", user.id, 20, 60)
+    tool = await _registered_space(db, tool_id, group_name, func_type, namespace)
+    group_name, func_type, namespace = tool.group_name, tool.func_type, tool.namespace
     await _require_space(db, user, group_name, func_type, namespace, "write")
     return await FileService.init_chunk(
         db=db,
@@ -214,15 +294,18 @@ async def chunk_upload_part(
 @router.post("/upload/chunk/complete", response_model=FileAssetOut, summary="分片上传-合并完成")
 async def chunk_upload_complete(
     upload_id: str = Form(...),
-    group_name: str = Form(...),
-    func_type: str = Form(...),
-    namespace: str = Form(...),
     filename: str = Form(...),
+    tool_id: Optional[str] = Form(None),
+    group_name: Optional[str] = Form(None),
+    func_type: Optional[str] = Form(None),
+    namespace: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:files:upload")),
 ):
+    tool = await _registered_space(db, tool_id, group_name, func_type, namespace)
+    group_name, func_type, namespace = tool.group_name, tool.func_type, tool.namespace
     await _require_space(db, user, group_name, func_type, namespace, "write")
     tag_list = [t.strip() for t in tags.split(",")] if tags else None
     asset = await FileService.complete_chunk(
@@ -355,6 +438,7 @@ async def update(
         ng = payload.group_name or asset.group_name
         nf = payload.func_type or asset.func_type
         nn = payload.namespace or asset.namespace
+        await _registered_space(db, None, ng, nf, nn)
         await _require_space(db, user, ng, nf, nn, "write")
     asset = await FileService.move(
         db, asset_id,
@@ -385,8 +469,6 @@ async def delete(
 
 # ============ 工具授权 -> 文件权限 联动（新增） ============
 from app.services.tool_grant_service import ToolGrantService
-from app.models.tool import Tool
-
 @router.post("/tool-grants")
 async def grant_tool_access(
     tool_id: str,

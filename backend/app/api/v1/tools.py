@@ -60,6 +60,7 @@ async def list_tools(
             func_type=t.func_type,
 
             namespace=t.namespace,
+            file_space_enabled=t.file_space_enabled,
         )
         for t in tools
     ]
@@ -183,6 +184,7 @@ async def get_tool(
         func_type=tool.func_type,
 
         namespace=tool.namespace,
+        file_space_enabled=tool.file_space_enabled,
     )
 
 
@@ -289,6 +291,7 @@ async def create_tool(
         func_type=tool.func_type,
 
         namespace=tool.namespace,
+        file_space_enabled=tool.file_space_enabled,
     )
 
 
@@ -332,6 +335,7 @@ async def update_tool(
         func_type=tool.func_type,
 
         namespace=tool.namespace,
+        file_space_enabled=tool.file_space_enabled,
     )
 
 
@@ -342,7 +346,10 @@ async def delete_tool(
     current_user: User = Depends(get_current_user),
     _: bool = Depends(require_permission("button:tools:manage")),
 ):
-    success = await ToolService.delete_tool(db, tool_id)
+    try:
+        success = await ToolService.delete_tool(db, tool_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     if not success:
         raise HTTPException(status_code=404, detail="Tool not found")
     return {"message": "Tool deleted"}

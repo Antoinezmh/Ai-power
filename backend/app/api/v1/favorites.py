@@ -74,6 +74,7 @@ async def list_favorites(
             group_name=t.group_name,
             func_type=t.func_type,
             namespace=t.namespace,
+            file_space_enabled=t.file_space_enabled,
             usage_count=t.usage_count,
             is_active=t.is_active,
             is_public=t.is_public,

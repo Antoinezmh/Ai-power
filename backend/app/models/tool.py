@@ -28,6 +28,8 @@ class Tool(Base):
     group_name = Column(String(50), nullable=True, index=True)   # 一级分组（八组之一）
     func_type = Column(String(50), nullable=True)                # 功能型：数据处理/报告产出/原始数据
     namespace = Column(String(50), nullable=True, index=True)    # 工具空间标识（文件中心最底层目录）
+    # 是否在文件中心注册为可选择的工具空间；namespace 仍可独立用作工具路由标识。
+    file_space_enabled = Column(Boolean, default=True, nullable=False, server_default="true")
 
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
