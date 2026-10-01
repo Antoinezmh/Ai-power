@@ -1,0 +1,25 @@
+test_change_invalidates_approval (test_engine.EngineTests.test_change_invalidates_approval) ... ok
+test_conflicting_family_flagged (test_engine.EngineTests.test_conflicting_family_flagged) ... ok
+test_duplicate_family_not_double_counted (test_engine.EngineTests.test_duplicate_family_not_double_counted) ... ok
+test_empty_abstains (test_engine.EngineTests.test_empty_abstains) ... ok
+test_expired (test_engine.EngineTests.test_expired) ... ok
+test_nan_rejected (test_engine.EngineTests.test_nan_rejected) ... ok
+test_persistence (test_engine.EngineTests.test_persistence) ... ok
+test_production_disabled (test_engine.EngineTests.test_production_disabled) ... ok
+test_revision_conflict (test_engine.EngineTests.test_revision_conflict) ... ok
+test_self_approval_blocked (test_engine.EngineTests.test_self_approval_blocked) ... ok
+test_single_use_and_no_execution (test_engine.EngineTests.test_single_use_and_no_execution) ... ok
+test_unknown_does_not_fill_required (test_engine.EngineTests.test_unknown_does_not_fill_required) ... ok
+test_condition_mismatch_abstains (test_judge.JudgeTests.test_condition_mismatch_abstains) ... ok
+test_high_confidence_cannot_override_rule (test_judge.JudgeTests.test_high_confidence_cannot_override_rule) ... ok
+test_missing_evidence_reference_rejected (test_judge.JudgeTests.test_missing_evidence_reference_rejected) ... ok
+test_no_automatic_model_download (test_judge.JudgeTests.test_no_automatic_model_download) ... ok
+test_passing_numbers_never_authorize_release (test_judge.JudgeTests.test_passing_numbers_never_authorize_release) ... ok
+test_router_uses_independent_questions (test_judge.JudgeTests.test_router_uses_independent_questions) ... ok
+test_synthetic_contract_cases (test_judge.JudgeTests.test_synthetic_contract_cases) ... ok
+test_wrong_unit_rejected (test_judge.JudgeTests.test_wrong_unit_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.008s
+
+OK

@@ -1,0 +1,13 @@
+{
+  "schema_version": "task/v1", "demo": true,
+  "project_id": "G3-750V-8inch-DEMO", "id": "HTRB-DEMO-001",
+  "title": "HTRB 异常调查演示", "goal": "设计能区分候选机理的下一步验证",
+  "revision": 1, "state": "READY", "owner": "engineer-demo",
+  "requirements": ["每项观测回查原始数据", "不可输出未经校准的机理概率"],
+  "constraints": {"production_execution": false, "real_data": false},
+  "sample_identity": {"lot": "DEMO-LOT", "wafer": "DEMO-WAFER", "device_revision": "DEMO"},
+  "hypotheses": [{"id":"H1","statement":"终端相关"},{"id":"H2","statement":"沟槽栅氧相关"},{"id":"H3","statement":"污染相关"}],
+  "required_evidence": ["localization", "temperature_dependence", "test_conditions"],
+  "plan": {"skill_id":"htrb_rca","version":"0.1-demo","steps":["validate","rank","judge","propose_measurement","human_review"]},
+  "evidence": [], "decision": null, "next_action": "导入定位资料与测试条件"
+}

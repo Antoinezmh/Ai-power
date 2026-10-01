@@ -70,3 +70,16 @@ cd backend
 ```
 
 当前生产数据位于 PostgreSQL、`file-data` named volume；每日运行 `bash deploy/backup.sh /srv/aipower-backups` 并把备份同步到异机或对象存储。
+
+## AIxPOWER 2.0 V1 蓝图与 Judge 参考实现
+
+新增独立实验目录 [experiments/aixpower-v1](experiments/aixpower-v1/README.md)：Engineering Task、Evidence、版本绑定审批、Rule/Laya/LLM Judge 设计，以及 G3 HTRB 合成案例。此目录尚未接入现有应用或生产工具；Laya 推理默认关闭。
+
+```bash
+cd experiments/aixpower-v1
+python -m unittest discover -s tests -v
+python -m backend.demo
+python -m backend.benchmark
+```
+
+详细设计见 [V1 软件蓝图](experiments/aixpower-v1/docs/BLUEPRINT.md) 与 [Judge v0.1](experiments/aixpower-v1/docs/JUDGE-v0.1.md)。

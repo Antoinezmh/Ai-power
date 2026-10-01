@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","title":"EngineeringState v0.1",
+  "type":"object","additionalProperties":false,
+  "required":["schema_version","project_id","task_id","revision","observations","metrics","specs","evidence_ids","critical_missing","proposed_action"],
+  "properties":{
+    "schema_version":{"const":"engineering-state/v0.1"},"demo":{"type":"boolean"},
+    "project_id":{"type":"string","minLength":1},"task_id":{"type":"string","minLength":1},"revision":{"type":"integer","minimum":1},
+    "observations":{"type":"array","items":{"type":"object","required":["text","evidence_ids"],"properties":{"text":{"type":"string"},"evidence_ids":{"type":"array","items":{"type":"string"}}},"additionalProperties":false}},
+    "metrics":{"type":"object","additionalProperties":{"$ref":"#/$defs/metric"},"propertyNames":{"enum":["BV_V","Ron_mohm_cm2","Eox_MV_cm","Vth_V","SCWT_us"]}},
+    "specs":{"type":"object","additionalProperties":{"$ref":"#/$defs/spec"},"propertyNames":{"enum":["BV_V","Ron_mohm_cm2","Eox_MV_cm","Vth_V","SCWT_us"]}},
+    "evidence_ids":{"type":"array","uniqueItems":true,"items":{"type":"string"}},"critical_missing":{"type":"array","items":{"type":"string"}},
+    "proposed_action":{"type":"object","required":["kind"],"properties":{"kind":{"enum":["COLLECT_EVIDENCE","ANALYZE","DESIGN_PROPOSAL","PRODUCTION_RELEASE"]},"description":{"type":"string"}},"additionalProperties":false}
+  },
+  "$defs":{
+    "metric":{"type":"object","required":["value","unit","conditions","evidence_id"],"properties":{"value":{"type":"number","minimum":0},"unit":{"type":"string"},"conditions":{"type":"object","minProperties":1},"evidence_id":{"type":"string"}},"additionalProperties":false},
+    "spec":{"type":"object","required":["unit","rule_version","conditions"],"properties":{"min":{"type":"number"},"max":{"type":"number"},"unit":{"type":"string"},"rule_version":{"type":"string"},"conditions":{"type":"object","minProperties":1}},"anyOf":[{"required":["min"]},{"required":["max"]}],"additionalProperties":false}
+  }
+}

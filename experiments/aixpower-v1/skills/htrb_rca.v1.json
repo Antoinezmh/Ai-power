@@ -1,0 +1,14 @@
+{
+  "id":"htrb_rca", "version":"0.1-demo", "release_state":"DRAFT", "demo":true,
+  "review_owner":"reliability-expert-required",
+  "input_schema":{"type":"object","required":["task_id","revision","evidence_ids"],"properties":{"task_id":{"type":"string"},"revision":{"type":"integer","minimum":1},"evidence_ids":{"type":"array","items":{"type":"string"}}},"additionalProperties":false},
+  "output_schema":{"type":"object","required":["verdict","hypothesis_ranking","missing","next_action","evidence_ids"],"properties":{"verdict":{"enum":["PASS","FAIL","UNKNOWN"]},"hypothesis_ranking":{"type":"array"},"missing":{"type":"array"},"next_action":{"type":"object"},"evidence_ids":{"type":"array"}},"additionalProperties":false},
+  "required_evidence":["localization","temperature_dependence","test_conditions"],
+  "steps":[{"id":"validate","executor":"deterministic"},{"id":"rank","executor":"evidence-score/v0-demo"},{"id":"judge","executor":"missing-evidence-gate/v0-demo"},{"id":"propose_measurement","executor":"proposal-only"}],
+  "tool_allowlist":["wafermap.describe@0.1-demo"],
+  "rule_versions":["independence/v0-demo","missing-evidence-gate/v0-demo"],
+  "limits":{"max_iterations":2,"max_runtime_seconds":120,"external_writes":false},
+  "risk_level":"ANALYZE", "human_gate":"decision-review",
+  "evaluation_set":"tests/test_engine.py",
+  "acceptance":["no invented evidence","no probability claim","critical missing data blocks release","all proposals cite snapshot"]
+}

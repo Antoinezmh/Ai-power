@@ -1,0 +1,7 @@
+{
+  "tool_id":"tcad.submit", "tool_version":"adapter-proposed-v1", "implemented":false,
+  "input":{"task_id":"HTRB-DEMO-001","task_revision":3,"structure_artifact_id":"demo-structure","parameters":{"bias_V":600,"temperature_K":448.15},"environment":"sandbox-only","idempotency_key":"demo-run-001"},
+  "input_hash":"computed-server-side", "budget":{"license_slots":1,"max_runtime_seconds":3600},
+  "result_contract":{"job_id":"external-job-id","status":"QUEUED|SUBMITTED|WAITING|SUCCEEDED|FAILED|UNKNOWN|CANCELLED","artifact_ids":[],"software_version":"required","warnings":[]},
+  "policy":{"arbitrary_shell":false,"production_target":false,"query_before_retry":true,"approval_binding":"decision-snapshot-hash"}
+}
